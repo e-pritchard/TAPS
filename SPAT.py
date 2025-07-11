@@ -5,44 +5,46 @@ import matplotlib.pyplot as plt
 import numpy as np
 import splat
 
-class spectrum(splat.Spectrum):
-    def __init__(self):
+class spec(splat.Spectrum):
+    def __init__(self, file):
         self.fnu = None
         self.fnu_err = None
         self.flam = None
         self.flam_err = None
+        self.file = file
 
-    def read_file(self, file_name):
-        #Opens the fits file by:
-        hdul = fits.open(file_name)
-    
-        #The data we wish to access is in index 1 (SPEC1D), so we can select index to it by:
-        data = hdul[1].data
+    def readfile(self):
+        #Opens the fits file & select index 1 (SPECID) where the data we wish to access lives
+        data = fits.open(self.file)[1].data
     
         #Within data is 10 columns, we wish to access the columns titled, "wave", "flux", "err"
         self.wave = data["wave"] * u.micron
         self.fnu = data["flux"] * u.microjansky
-        self.fnu_err = data["err"] * u.microjansky
-        
-        lam_flux = self.fnu*(const.c) / self.wave**2
-        lam_err = self.fnu_err*(const.c) / self.wave**2
+        self.err_fnu = data["err"] * u.microjansky
 
-        self.flam = lam_flux.to((1*10**(-20))*u.erg*(1/u.s)*(1/u.cm**2)*(1/u.AA))
-        self.flam_err = lam_err.to((1*10**(-20))*u.erg*(1/u.s)*(1/u.cm**2)*(1/u.AA))
+        self.flam = ((self.fnu * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+        self.err_flam = ((self.err_fnu * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
 
-    def plot(self, fluxtype):
+    def plot(self, flxtype):
         plt.figure(figsize=(9,4))
-        if fluxtype == "flam":
-            plt.plot(self.wave, self.flam)
-            plt.plot(self.wave, self.flam_err)
-            plt.xlabel("Wavelength [${\mu}m$]")
-            plt.ylabel("$f_{\lambda} [10^-20 ergs^-1 cm^-2 {\AA}^-1]$")
-        elif fluxtype == "fnu":
-            plt.plot(self.wave, self.fnu)
-            plt.plot(self.wave, self.fnu_err)
-            plt.xlabel("Wavelength [${\mu}m$]")
-            plt.ylabel(r"$f_{\nu} [{\mu}Jy$]")
-        else: 
-            raise ExceptionType("Need a fluxtype")
 
+        if flxtype == "flam":
+            y = self.flam
+            e_y = self.err_flam
+            ylabel = r'$f_{\lambda}\ [10^{-20}ergs^{-1}cm^{-2}\AA^{-1}]$'
+            
+        elif flxtype == "fnu":
+            y = self.fnu
+            e_y = self.err_fnu
+            ylabel = r'$f_{\nu}\ [{\mu}Jy]$'
+
+        #else:
+            #raise ExceptionType("Need a fluxtype")
+            
+        plt.plot(self.wave, y, color = '#5d0eff', lw = 1.2)
+        plt.plot(self.wave, e_y, color = 'k', lw = 1.2) 
+        plt.xticks(np.arange(0.5,5.5,step=0.5))
+        plt.xlabel(r'$\lambda_{obs}\ [{\mu}m]$')
+        plt.ylabel(ylabel)
+        plt.grid()
         return plt.show()
