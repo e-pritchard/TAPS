@@ -32,9 +32,17 @@ class spectrum(splat.Spectrum):
 
     def plot(self, fluxtype):
         plt.figure(figsize=(9,4))
-        if fluxtype == "flam
-        plt.plot(self.wave, self.flam)
-        plt.plot(self.wave, self.flam_err)
-        plt.xlabel("Wavelength [${\mu}m$]")
-        plt.ylabel("$f_{\lambda} [10^-20 ergs^-1 cm^-2 {\AA}^-1]$")
+        if fluxtype == "flam":
+            plt.plot(self.wave, self.flam)
+            plt.plot(self.wave, self.flam_err)
+            plt.xlabel("Wavelength [${\mu}m$]")
+            plt.ylabel("$f_{\lambda} [10^-20 ergs^-1 cm^-2 {\AA}^-1]$")
+        elif fluxtype == "fnu":
+            plt.plot(self.wave, self.fnu)
+            plt.plot(self.wave, self.fnu_err)
+            plt.xlabel("Wavelength [${\mu}m$]")
+            plt.ylabel(r"$f_{\nu} [{\mu}Jy$]")
+        else: 
+            raise ExceptionType("Need a fluxtype")
+
         return plt.show()
