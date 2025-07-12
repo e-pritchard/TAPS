@@ -45,3 +45,19 @@ class spec(splat.Spectrum):
         plt.ylabel(ylabel)
         plt.grid()
         return plt.show()
+
+def compspec(spectrum1, spectrum2, err=True):
+
+    #This function graphs two different spectra onto the same plot
+    #Spectrum1 is intended as a source while Spectrum2 is intended for a standard model
+    #FOR NOW this is a bit bare bones but a good start!
+    
+    plt.figure(figsize=(9,4))
+    plt.xlabel(r'$\lambda_{obs}\ [{\mu}m]$')
+    plt.ylabel(r'$f_{\lambda}\ [10^{-20}ergs^{-1}cm^{-2}\AA^{-1}]$')
+    plt.plot(spectrum1.wave, spectrum1.flam, label="Borg")
+    plt.plot(spectrum2.wave, spectrum2.flam, label="RUBIES")
+    if err==True:
+        plt.plot(spectrum1.wave, spectrum1.err_flam, label="err_borg")
+    plt.legend(fontsize = "medium")
+    plt.show()
