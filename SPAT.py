@@ -37,9 +37,6 @@ class spec(splat.Spectrum):
             y = self.fnu
             e_y = self.err_fnu
             ylabel = r'$f_{\nu}\ [{\mu}Jy]$'
-
-        #else:
-            #raise ExceptionType("Need a fluxtype")
             
         plt.plot(self.wave, y, color = '#5d0eff', lw = 1.2)
         plt.plot(self.wave, e_y, color = 'k', lw = 1.2) 
