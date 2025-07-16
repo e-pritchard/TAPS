@@ -68,6 +68,7 @@ class spec(splat.Spectrum):
 
 def classifystandard(spec):
     #classifies by comparison to standard
+    #think this only works for fnu because splat.classifyByStandard refers to self.wave & self.noise
     return splat.classifyByStandard(spec)
 
 #need to add classification by index & template
