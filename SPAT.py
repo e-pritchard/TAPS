@@ -81,6 +81,10 @@ def compspec(spec1, spec2, err=True):
     #spec1 is intended as a source while spec2 is intended for a standard model
     #FOR NOW this is a bit bare bones but a good start!
     #need to add chi
+
+    #first quantify a statistic that tells how similar your spec it to another & then ranks/chooses 
+    #use equation in sara's paper for standard chi squared statistic
+    #second plot for visual compare
     
     plt.figure(figsize=(9,4))
     plt.xlabel(r'$\lambda_{obs}\ [{\mu}m]$')
