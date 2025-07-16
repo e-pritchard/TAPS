@@ -24,7 +24,7 @@ class spec(splat.Spectrum):
         self.variance = self.noise**2
 
         self.flam = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-        self.err_flam = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+        self.flam_err = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
 
     def plot(self, flxtype, name = None):
     #plots the spectrum in either fnu or flam as specified
@@ -32,7 +32,7 @@ class spec(splat.Spectrum):
 
         if flxtype == "flam":
             y = self.flam
-            e_y = self.err_flam
+            e_y = self.flam_err
             ylabel = r'$f_{\lambda}\ [10^{-20}ergs^{-1}cm^{-2}\AA^{-1}]$'
             
         elif flxtype == "fnu":
@@ -54,6 +54,13 @@ class spec(splat.Spectrum):
         plt.ylabel(ylabel)
         plt.grid()
         return plt.show()
+
+    def normalize(self):
+    #this allows both flam and fnu to become normalized
+        self.flam_err = self.flam_err / np.nanmax(self.flam)
+        self.flam = self.flam / np.nanmax(self.flam)
+    #splat's normalize applies to self.wave and self.flux (fnu) by default
+        return super().normalize()
 
 
 def classifystandard(spec):
