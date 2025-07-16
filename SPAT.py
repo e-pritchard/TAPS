@@ -14,6 +14,8 @@ class spec(splat.Spectrum):
         self.flux_unit = u.microjansky
 
     def readfile(self):
+        #THINKING OF UPDATING to specify flxtype in the readfile so that do not have to specify in multiple functions (also needs to be 
+        #updated with julia's code that will reduce number of steps)
         #Opens the fits file & select index 1 (SPECID) where the data we wish to access lives
         data = fits.open(self.file)[1].data
     
@@ -56,6 +58,7 @@ class spec(splat.Spectrum):
         return plt.show()
 
     def normalize(self):
+    #NEED TO UPDATE THIS (don't wan't it to actually update the spec object). may just write our own code here
     #this allows both flam and fnu to become normalized
         self.flam_err = self.flam_err / np.nanmax(self.flam)
         self.flam = self.flam / np.nanmax(self.flam)
@@ -66,6 +69,8 @@ class spec(splat.Spectrum):
 def classifystandard(spec):
     #classifies by comparison to standard
     return splat.classifyByStandard(spec)
+
+#need to add classification by index & template
     
 
 def compspec(spec1, spec2, err=True):
@@ -73,6 +78,7 @@ def compspec(spec1, spec2, err=True):
     #This function graphs two different spectra onto the same plot
     #spec1 is intended as a source while spec2 is intended for a standard model
     #FOR NOW this is a bit bare bones but a good start!
+    #need to add chi
     
     plt.figure(figsize=(9,4))
     plt.xlabel(r'$\lambda_{obs}\ [{\mu}m]$')
