@@ -16,6 +16,7 @@ class spec(splat.Spectrum):
     def readfile(self):
         #THINKING OF UPDATING to specify flxtype in the readfile so that do not have to specify in multiple functions (also needs to be 
         #updated with julia's code that will reduce number of steps)
+        #or have one default with a function to convert
         #Opens the fits file & select index 1 (SPECID) where the data we wish to access lives
         data = fits.open(self.file)[1].data
     
