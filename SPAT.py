@@ -6,12 +6,15 @@ import numpy as np
 import splat
 
 class spec(splat.Spectrum):
-    def __init__(self, file):
+    def __init__(self, file, read_file: bool = True):
         self.flam = None
         self.flam_err = None
         self.file = file
         self.variance = []
         self.flux_unit = u.microjansky
+
+        if read_file:
+            self.readfile()
 
     def readfile(self):
         #THINKING OF UPDATING to specify flxtype in the readfile so that do not have to specify in multiple functions (also needs to be 
