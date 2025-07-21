@@ -61,14 +61,25 @@ class spec(splat.Spectrum):
         plt.grid()
         return plt.show()
 
-    def normalize(self):
+    #def normalize(self):
     #NEED TO UPDATE THIS (don't wan't it to actually update the spec object). may just write our own code here
     #this allows both flam and fnu to become normalized
-        self.flam_err = self.flam_err / np.nanmax(self.flam)
-        self.flam = self.flam / np.nanmax(self.flam)
+        #self.flam_err = self.flam_err / np.nanmax(self.flam)
+        #self.flam = self.flam / np.nanmax(self.flam)
     #splat's normalize applies to self.wave and self.flux (fnu) by default
-        return super().normalize()
+        #return super().normalize()
 
+def normalizespec(spectrum):
+    if type(spectrum) == spec:
+        output = spec(spectrum.file)
+        output.flam_err = spectrum.flam_err / np.nanmax(spectrum.flam)
+        output.flam = spectrum.flam / np.nanmax(spectrum.flam)
+        output.noise = spectrum.noise / np.nanmax(spectrum.flux)
+        output.flux = spectrum.flux / np.nanmax(spectrum.flux)
+    else: 
+        print("Need a SPAT.spec object!")
+
+    return output 
 
 def classifystandard(spec):
     #classifies by comparison to standard
