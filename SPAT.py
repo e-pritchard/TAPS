@@ -89,23 +89,30 @@ def classifystandard(spec):
 #need to add classification by index & template
     
 
-def compspec(spec1, spec2, err=True):
+def compspec(spec1, spec2, err=True, alpha=1):
 
-    #This function graphs two different spectra onto the same plot
+    #This function graphs two different spectra onto the same plot and calculates chi for a spectrum and a standard model
     #spec1 is intended as a source while spec2 is intended for a standard model
-    #FOR NOW this is a bit bare bones but a good start!
-    #need to add chi
-
-    #first quantify a statistic that tells how similar your spec it to another & then ranks/chooses 
-    #use equation in sara's paper for standard chi squared statistic
-    #second plot for visual compare
     
+    #this is a bare bones chi
+    #was modeled after sara's standard chi squared statistic
+    chi_squared = 0
+    for i in range(len(spec1.flam)):
+        if not np.isnan(spec1.flam[i].value) or not np.isnan(spec2.flam[i].value):
+            chi_squared += ((spec1.flam[i] - alpha * spec2.flam[i]) / spec1.flam_err[i])**2
+           #print(chi_squared)
+
+    #chi = (chi_squared)**(1/2)
+
+    #this simply plots the graphs inputed; as a visual for chi
     plt.figure(figsize=(9,4))
     plt.xlabel(r'$\lambda_{obs}\ [{\mu}m]$')
     plt.ylabel(r'$f_{\lambda}\ [10^{-20}ergs^{-1}cm^{-2}\AA^{-1}]$')
     plt.plot(spec1.wave, spec1.flam, label="Borg")
     plt.plot(spec2.wave, spec2.flam, label="RUBIES")
     if err==True:
-        plt.plot(spec1.wave, spec1.err_flam, label="err_borg")
+        plt.plot(spec1.wave, spec1.flam_err, label="err_borg")
     plt.legend(fontsize = "medium")
     plt.show()
+
+    return chi_squared
