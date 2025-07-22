@@ -97,6 +97,8 @@ def compspec(spec1, spec2, err=True, alpha=1):
     #this is a bare bones chi
     #was modeled after sara's standard chi squared statistic
     chi_squared = 0
+    alphanum = 0 
+    alphadenom = 0
     for i in range(len(spec1.flam)):
         if not np.isnan(spec1.flam[i].value) or not np.isnan(spec2.flam[i].value):
             alphanum += ((spec1.flam[i])*(spec2.flam[i])) / (spec1.flam_err[i]**2)
