@@ -104,7 +104,7 @@ def compspec(spec1, spec2, err=True, alpha=1):
             alphanum += ((spec1.flam[i])*(spec2.flam[i])) / (spec1.flam_err[i]**2)
             alphadenom += (spec2.flam[i]**2) / (spec1.flam_err[i]**2)
             alpha = alphanum / alphadenom
-            chi_squared += (spec1.flam[i] - (alpha * spec2.flam[i])) / (spec1.flam_err[i]**2)
+            chi_squared += ((spec1.flam[i] - (alpha * spec2.flam[i])) / (spec1.flam_err[i]))**2
             #print(chi_squared)
 
     #chi = (chi_squared)**(1/2)
