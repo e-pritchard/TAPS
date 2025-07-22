@@ -89,7 +89,7 @@ def classifystandard(spec):
 #need to add classification by index & template
     
 
-def compspec(spec1, spec2, err=True, alpha=1):
+def compspec(spec1, spec2, err=True):
 
     #This function graphs two different spectra onto the same plot and calculates chi for a spectrum and a standard model
     #spec1 is intended as a source while spec2 is intended for a standard model
