@@ -89,7 +89,10 @@ def classifystandard(spec):
 #need to add classification by index & template
 
 
-def chisquare(spec1, spec2, err=True):
+def chisquare(spec1, spec2):
+    #this is a bare bones chi
+    #was modeled after sara's standard chi squared statistic
+    
     chi_squared = 0
     alphanum = 0 
     alphadenom = 0
@@ -99,29 +102,16 @@ def chisquare(spec1, spec2, err=True):
             alphadenom += (spec2.flam[i]**2) / (spec1.flam_err[i]**2)
             alpha = alphanum / alphadenom
             chi_squared += ((spec1.flam[i] - (alpha * spec2.flam[i])) / (spec1.flam_err[i]))**2
+            return chi_squared
             #print(chi_squared)
-
-def compspec2(spec1, spec2, err=True):
-    chisquare(spec1, spec2, err=True)
 
 def compspec(spec1, spec2, err=True):
 
     #This function graphs two different spectra onto the same plot and calculates chi for a spectrum and a standard model
     #spec1 is intended as a source while spec2 is intended for a standard model
-    
-    #this is a bare bones chi
-    #was modeled after sara's standard chi squared statistic
-    chi_squared = 0
-    alphanum = 0 
-    alphadenom = 0
-    for i in range(len(spec1.flam)):
-        if not np.isnan(spec1.flam[i].value) or not np.isnan(spec2.flam[i].value):
-            alphanum += ((spec1.flam[i])*(spec2.flam[i])) / (spec1.flam_err[i]**2)
-            alphadenom += (spec2.flam[i]**2) / (spec1.flam_err[i]**2)
-            alpha = alphanum / alphadenom
-            chi_squared += ((spec1.flam[i] - (alpha * spec2.flam[i])) / (spec1.flam_err[i]))**2
-            #print(chi_squared)
 
+    chi_squared = chisquare(spec1, spec2)
+   
     #chi = (chi_squared)**(1/2)
 
     #this simply plots the graphs inputed; as a visual for chi
