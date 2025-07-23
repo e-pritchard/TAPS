@@ -101,6 +101,7 @@ def classifystandard(spec, standardset):
         newchisqr = chisquare(spec, standard)
         if newchisqr < chisqr:
             chisqr = newchisqur
+            return chisqr
 
 #need to add classification by index & template
 
