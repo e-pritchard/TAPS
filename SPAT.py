@@ -12,6 +12,8 @@ class spec(splat.Spectrum):
         self.file = file
         self.variance = []
         self.flux_unit = u.microjansky
+        self.id = ''
+        self.e_id
 
         if read_file:
             self.readfile()
@@ -31,6 +33,11 @@ class spec(splat.Spectrum):
 
         self.flam = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
         self.flam_err = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+
+        piece = self.split('_')
+        self.id = piece[0] +"_" piece[2] + "_" + piece[3]
+        self.e_id = piece[3]
+
 
     def plot(self, flxtype, name = None):
     #plots the spectrum in either fnu or flam as specified
@@ -113,15 +120,15 @@ def compspec(spec1, spec2, err=True):
     chi_squared = chisquare(spec1, spec2)
    
     #chi = (chi_squared)**(1/2)
-
+    
     #this simply plots the graphs inputed; as a visual for chi
     plt.figure(figsize=(9,4))
     plt.xlabel(r'$\lambda_{obs}\ [{\mu}m]$')
     plt.ylabel(r'$f_{\lambda}\ [10^{-20}ergs^{-1}cm^{-2}\AA^{-1}]$')
-    plt.plot(spec1.wave, spec1.flam, label="Borg")
-    plt.plot(spec2.wave, spec2.flam, label="RUBIES")
+    plt.plot(spec1.wave, spec1.flam, label= spec1.id)
+    plt.plot(spec2.wave, spec2.flam, label= spec2.id)
     if err==True:
-        plt.plot(spec1.wave, spec1.flam_err, label="err_borg")
+        plt.plot(spec1.wave, spec1.flam_err, label= spec1.e_id)
     plt.legend(fontsize = "medium")
     plt.show()
 
