@@ -96,6 +96,7 @@ def normalizespec(spectrum):
     #return splat.classifyByStandard(spec)
 
 def classifystandard(spec, standardset):
+    #classifies by comparison to standard
     chisqr = 10000
     for standard in standardset:
         newchisqr = chisquare(spec, standard)
@@ -104,7 +105,6 @@ def classifystandard(spec, standardset):
             return chisqr
 
 #need to add classification by index & template
-
 
 def chisquare(spec1, spec2):
     #this is a bare bones chi
