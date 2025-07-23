@@ -136,4 +136,4 @@ def compspec(spec1, spec2, err=True):
     plt.legend(fontsize = "medium")
     plt.show()
 
-    return chisqr_formatted
+    return chi_squared
