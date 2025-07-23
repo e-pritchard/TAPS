@@ -129,7 +129,7 @@ def compspec(spec1, spec2, err=True):
     plt.ylabel(r'$f_{\lambda}\ [10^{-20}ergs^{-1}cm^{-2}\AA^{-1}]$')
     plt.plot(spec1.wave, spec1.flam, label= spec1.id)
     plt.plot(spec2.wave, spec2.flam, label= spec2.id)
-    plt.plot([],[], label = r'$\chi^{2}$' = chi_squared, alpha = 0)
+    plt.plot([],[], label = f"$\chi^{2}$ = {chi_squared}", alpha = 0)
     if err==True:
         plt.plot(spec1.wave, spec1.flam_err, label= spec1.e_id)
     plt.legend(fontsize = "medium")
