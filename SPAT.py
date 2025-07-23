@@ -120,7 +120,7 @@ def compspec(spec1, spec2, err=True):
     #spec1 is intended as a source while spec2 is intended for a standard model
 
     chi_squared = chisquare(spec1, spec2) 
-    chisqr_formatted = ("{:.1f}".format(chi_sqaured))
+    chisqr_formatted = ("{:.1f}".format(chi_squared))
    
     #chi = (chi_squared)**(1/2)
     
@@ -136,4 +136,4 @@ def compspec(spec1, spec2, err=True):
     plt.legend(fontsize = "medium")
     plt.show()
 
-    return chi_squared
+    return chisqr_formatted
