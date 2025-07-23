@@ -38,7 +38,7 @@ class spec(splat.Spectrum):
         pieceper = self.file.split('.')
         pieceundscr = pieceper[0].split('_')
         self.id = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
-        self.e_id = pieceundscr[3]
+        self.e_id = "e_" + pieceundscr[3]
 
 
     def plot(self, flxtype, name = None):
@@ -130,7 +130,7 @@ def compspec(spec1, spec2, err=True):
     plt.plot(spec1.wave, spec1.flam, label= spec1.id)
     plt.plot(spec2.wave, spec2.flam, label= spec2.id)
     if err==True:
-        plt.plot(spec1.wave, spec1.flam_err, label= "e_" + spec1.e_id)
+        plt.plot(spec1.wave, spec1.flam_err, label= spec1.e_id)
     plt.legend(fontsize = "medium")
     plt.show()
 
