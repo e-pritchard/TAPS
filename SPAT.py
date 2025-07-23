@@ -13,7 +13,7 @@ class spec(splat.Spectrum):
         self.variance = []
         self.flux_unit = u.microjansky
         self.id = ''
-        self.e_id
+        self.e_id = ''
 
         if read_file:
             self.readfile()
@@ -34,9 +34,10 @@ class spec(splat.Spectrum):
         self.flam = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
         self.flam_err = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
 
-        piece = self.split('_')
-        self.id = piece[0] +"_" piece[2] + "_" + piece[3]
-        self.e_id = piece[3]
+        pieceper = self.file.split('.')
+        pieceundscr = pieceper[0].split('_')
+        self.id = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
+        self.e_id = pieceundscr[3]
 
 
     def plot(self, flxtype, name = None):
