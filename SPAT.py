@@ -90,10 +90,17 @@ def normalizespec(spectrum):
 
     return output 
 
-def classifystandard(spec):
+#def classifystandard(spec):
     #classifies by comparison to standard
     #think this only works for fnu because splat.classifyByStandard refers to self.wave & self.noise
-    return splat.classifyByStandard(spec)
+    #return splat.classifyByStandard(spec)
+
+def classifystandard(spec, standardset):
+    chisqr = 10000
+    for standard in standardset:
+        newchisqr = chisquare(spec, standard)
+        if newchisqr < chisqr:
+            chisqr = newchisqur
 
 #need to add classification by index & template
 
