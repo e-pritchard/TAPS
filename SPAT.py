@@ -34,6 +34,7 @@ class spec(splat.Spectrum):
         self.flam = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
         self.flam_err = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
 
+        #
         pieceper = self.file.split('.')
         pieceundscr = pieceper[0].split('_')
         self.id = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
@@ -129,7 +130,7 @@ def compspec(spec1, spec2, err=True):
     plt.plot(spec1.wave, spec1.flam, label= spec1.id)
     plt.plot(spec2.wave, spec2.flam, label= spec2.id)
     if err==True:
-        plt.plot(spec1.wave, spec1.flam_err, label= spec1.e_id)
+        plt.plot(spec1.wave, spec1.flam_err, label= "e_" + spec1.e_id)
     plt.legend(fontsize = "medium")
     plt.show()
 
