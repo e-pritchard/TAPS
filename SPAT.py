@@ -9,8 +9,10 @@ class spec(splat.Spectrum):
     def __init__(self, file, read_file: bool = True):
         self.file = file
         self.variance = []
-        self.flux_unit = u.microjansky
-        self.flux_label = r'$f_{\nu}\$'
+        #self.flux_unit = u.microjansky
+        self.flux_unit = ''
+        #self.flux_label = r'$f_{\nu}\$'
+        self.flux_label = ''
         self.id = ''
         self.e_id = ""
         self.name = ""
@@ -19,18 +21,37 @@ class spec(splat.Spectrum):
         if read_file:
             self.readfile()
 
-    def readfile(self):
+    #def readfile(self):
         #THINKING OF UPDATING to specify flxtype in the readfile so that do not have to specify in multiple functions (also needs to be 
         #updated with julia's code that will reduce number of steps)
         #or have one default with a function to convert
+        #Opens the fits file & select index 1 (SPECID) where the data we wish to access lives
+        #data = fits.open(self.file)[1].data
+    
+        #Within data is 10 columns, we wish to access the columns titled, "wave", "flux", "err"
+        #self.wave = data["wave"] * u.micron
+        #self.flux = data["flux"] * u.microjansky #fnu
+        #self.noise = data["err"] * u.microjansky #err_fnu
+        #self.variance = self.noise**2
+
+        #self.flam = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+        #self.flam_err = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+
+        #pieceper = self.file.split('.')
+        #pieceundscr = pieceper[0].split('_')
+        #self.id = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
+        #self.e_id = "e_" + pieceundscr[3]
+
+
+     def readfile(self, flxtype):
+        
         #Opens the fits file & select index 1 (SPECID) where the data we wish to access lives
         data = fits.open(self.file)[1].data
     
         #Within data is 10 columns, we wish to access the columns titled, "wave", "flux", "err"
         self.wave = data["wave"] * u.micron
-        self.flux = data["flux"] * u.microjansky #fnu
-        self.noise = data["err"] * u.microjansky #err_fnu
-        self.variance = self.noise**2
+        self.fnu = data["flux"] * u.microjansky #fnu
+        self.fnu_err = data["err"] * u.microjansky #err_fnu
 
         self.flam = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
         self.flam_err = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
@@ -39,6 +60,26 @@ class spec(splat.Spectrum):
         pieceundscr = pieceper[0].split('_')
         self.id = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
         self.e_id = "e_" + pieceundscr[3]
+
+        if flxtype == "fnu":
+            self.flux = self.fnu
+            self.noise = self.fnu_err
+            self.flux_unit = u.microjansky
+            self.flux_label = r'$f_{\nu}\$'
+            
+            
+        elif flxtype == "flam":
+            self.flux = self.flam
+            self.noise = self.flam_err
+            self.flux_unit = ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+            self.flux_label = r'$f_{\nu}\$'
+            self.flux_label = r'$f_{\lambda}$'
+
+         
+        self.variance = self.noise**2
+    
+
+        
 
 
     def plot(self, flxtype, name = None):
