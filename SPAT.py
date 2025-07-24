@@ -7,13 +7,14 @@ import splat
 
 class spec(splat.Spectrum):
     def __init__(self, file, read_file: bool = True):
-        self.flam = None
-        self.flam_err = None
         self.file = file
         self.variance = []
         self.flux_unit = u.microjansky
+        self.flux_label = r'$f_{\nu}\$'
         self.id = ''
-        self.e_id = ''
+        self.e_id = ""
+        self.name = ""
+        self.history = []
 
         if read_file:
             self.readfile()
@@ -34,7 +35,6 @@ class spec(splat.Spectrum):
         self.flam = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
         self.flam_err = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
 
-        #
         pieceper = self.file.split('.')
         pieceundscr = pieceper[0].split('_')
         self.id = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
@@ -77,6 +77,32 @@ class spec(splat.Spectrum):
         #self.flam = self.flam / np.nanmax(self.flam)
     #splat's normalize applies to self.wave and self.flux (fnu) by default
         #return super().normalize()
+
+def convertflux(spectrum):
+#PROCEED WITH CAUTION THIS IS NOT DONE LIKE AT ALLLLLLL
+#This function converts from your current flux type (fnu or flam) to the other. 
+#1st goal is to make this into to seperate functions in case you're already in the units you're attempting to convert to. 
+#2nd goal is to initialize a new spec object which holds the new flux type 
+    if spectrum.flux_label == r"$f_{\nu}\$":
+        if not spectrum.flux_unit == u.microjansky:
+            spectrum.flux_unit = u.microjansky
+            spectrum.flux = spectrum.flux.to(u.microjansky)
+            spectrum.noise = spectrum.noise.to(u.microjansky)
+        spectrum.flux = ((spectrum.flux * const.c)/(spectrum.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+        spectrum.noise = ((spectrum.noise * const.c)/(spectrum.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+        spectrum.flux_unit = (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)
+        spectrum.flux_label = r'$f_{\lambda}\$'
+
+    elif spectrum.flux_label == r'$f_{\lambda}\$':
+        if not spectrum.flux_unit == (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1):
+            spectrum.flux_unit = (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)
+            spectrum.flux = spectrum.flux.to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+        spectrum.flux = ((spectrum.wave**2)*(spectrum.flux))/(const.c).to(u.microjansky)
+        spectrum.noise = (((spectrum.wave**2)*(spectrum.noise))/(const.c)).to(u.microjansky)
+        spectrum.flux_unit = u.microjansky
+        spectrum.flux_label = r"$f_{\nu}\$"
+    else:
+        print("something has gone wrong")
 
 def normalizespec(spectrum):
     if type(spectrum) == spec:
