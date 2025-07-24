@@ -28,8 +28,12 @@ class spec(splat.Spectrum):
     
         #Within data is 10 columns, we wish to access the columns titled, "wave", "flux", "err"
         self.wave = data["wave"] * u.micron
-        self.flux = data["flux"] * u.microjansky #fnu
-        self.noise = data["err"] * u.microjansky #err_fnu
+        
+        self.fnu = data["flux"] * u.microjansky #fnu
+        self.fnu_err = data["err"] * u.microjansky #err_fnu
+        
+        self.flux = ((self.fnu * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)) #flam
+        self.noise = ((self.fnu_err * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)) #err_fnu
         self.variance = self.noise**2
 
         
