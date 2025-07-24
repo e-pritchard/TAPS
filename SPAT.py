@@ -6,16 +6,20 @@ import numpy as np
 import splat
 
 class spec(splat.Spectrum):
-    def __init__(self, file, read_file: bool = True):
+    def __init__(self, file, read_file: bool = True, flxtype = "flam"):
         self.file = file
         self.variance = []
-        self.flux_unit = u.microjansky
-        self.flux_label = r'$f_{\nu}\$'
-        self.id = ''
-        self.e_id = ""
+        self.name_err = ""
         self.name = ""
         self.history = []
 
+        if flxtype == "flam":
+            self.flux_label = r'$f_{\lambda}\$'
+            self.flux_unit = (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)
+        elif flxtype == "fnu":
+            self.flux_label = r'$f_{\nu}\$'
+            self.flux_unit = u.microjansky
+            
         if read_file:
             self.readfile()
 
@@ -28,30 +32,28 @@ class spec(splat.Spectrum):
     
         #Within data is 10 columns, we wish to access the columns titled, "wave", "flux", "err"
         self.wave = data["wave"] * u.micron
-        
-        self.fnu = data["flux"] * u.microjansky #fnu
-        self.fnu_err = data["err"] * u.microjansky #err_fnu
-        
-        self.flux = ((self.fnu * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)) #flam
-        self.noise = ((self.fnu_err * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)) #err_fnu
+        self.flux = data["flux"] * u.microjansky #fnu
+        self.noise = data["err"] * u.microjansky #err_fnu
         self.variance = self.noise**2
 
-        
+        if self.flux_label == r'$f_{\lambda}\$':
+            self.flux = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+            self.noise = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+            
 #        self.flam = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
 #        self.flam_err = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-
 
         if "\\" in self.file:
             piecedir = self.file.split('\\')
             pieceper = piecedir[-1].split('.')
             pieceundscr = pieceper[0].split('_')
-            self.id = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
-            self.e_id = "e_" + pieceundscr[3]
+            self.name = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
+            self.name_err = "e_" + pieceundscr[3]
         else:
             pieceper = self.file.split('.')
             pieceundscr = pieceper[0].split('_')
-            self.id = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
-            self.e_id = "e_" + pieceundscr[3]
+            self.name = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
+            self.name_err = "e_" + pieceundscr[3]
     
 
 
@@ -65,14 +67,19 @@ class spec(splat.Spectrum):
         e_y = self.noise
 
         plt.figure(figsize=(9,4))
-        plt.plot(self.wave, y, color='#5d0eff', lw=1.2, label=self.id)
+        plt.plot(self.wave, y, color='#5d0eff', lw=1.2, label=self.name)
         plt.legend()  
-        plt.plot(self.wave, e_y, color = 'k', lw = 1.2) 
+        plt.plot(self.wave, e_y, color = 'k', lw = 1.2, label=self.name_err) 
         plt.xticks(np.arange(0.5,5.5,step=0.5))
         plt.xlabel(r'$\lambda_{obs}\ [{\mu}m]$')
         plt.ylabel(ylabel)
         plt.grid()
         return plt.show()
+
+#Everything commented out below are obselete functions and no longer in use (but are saved incase the code is useful
+
+#        self.flam = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+#        self.flam_err = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
 
     #def normalize(self):
     #NEED TO UPDATE THIS (don't wan't it to actually update the spec object). may just write our own code here
@@ -148,7 +155,7 @@ def normalizespec(spectrum):
     else: 
         print("Need a SPAT.spec object!")
 
-    return output  
+    return output   
 
 #def classifystandard(spec):
     #classifies by comparison to standard
