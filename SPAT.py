@@ -17,13 +17,12 @@ class spec(splat.Spectrum):
         self.history = []
 
         if read_file:
-            self.readfile(flxtype)
+            self.readfile()
 
-    def readfile(self, flxtype):
+    def readfile(self):
         #THINKING OF UPDATING to specify flxtype in the readfile so that do not have to specify in multiple functions (also needs to be 
         #updated with julia's code that will reduce number of steps)
         #or have one default with a function to convert
-        
         #Opens the fits file & select index 1 (SPECID) where the data we wish to access lives
         data = fits.open(self.file)[1].data
     
@@ -33,47 +32,37 @@ class spec(splat.Spectrum):
         self.noise = data["err"] * u.microjansky #err_fnu
         self.variance = self.noise**2
 
-        self.flam = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-        self.flam_err = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+        
+#        self.flam = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+#        self.flam_err = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
 
-        pieceper = self.file.split('.')
-        pieceundscr = pieceper[0].split('_')
-        self.id = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
-        self.e_id = "e_" + pieceundscr[3]
-        
-        if flxtype == 'fnu':
-            self.flux = self.flux
-            self.noise = self.noise
-        
-        elif flxtype == "flam":
-            self.flux = self.flam
-            self.noise = self.flam_err
-            
+
+        if "\\" in self.file:
+            piecedir = self.file.split('\\')
+            pieceper = piecedir[-1].split('.')
+            pieceundscr = pieceper[0].split('_')
+            self.id = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
+            self.e_id = "e_" + pieceundscr[3]
+        else:
+            pieceper = self.file.split('.')
+            pieceundscr = pieceper[0].split('_')
+            self.id = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
+            self.e_id = "e_" + pieceundscr[3]
     
 
 
-    def plot(self, flxtype, name = None):
+    def plot(self):
     #plots the spectrum in either fnu or flam as specified
-        plt.figure(figsize=(9,4))
-
-        if flxtype == "flam":
-            y = self.flam
-            e_y = self.flam_err
-            ylabel = r'$f_{\lambda}\ [10^{-20}ergs^{-1}cm^{-2}\AA^{-1}]$'
-            
-        elif flxtype == "fnu":
-            y = self.flux
-            e_y = self.noise
+        if self.flux_label == r'$f_{\nu}\$':
             ylabel = r'$f_{\nu}\ [{\mu}Jy]$'
+        elif self.flux_label == r'$f_{\lambda}\$':
+            ylabel = r'$f_{\lambda}\ [10^{-20}ergs^{-1}cm^{-2}\AA^{-1}]$'
+        y = self.flux
+        e_y = self.noise
 
-
-        if name:
-            plt.plot(self.wave, y, color='#5d0eff', lw=1.2, label=name)
-            plt.legend()
-        
-        else:
-            plt.plot(self.wave, y, color='#5d0eff', lw=1.2)
-            
+        plt.figure(figsize=(9,4))
+        plt.plot(self.wave, y, color='#5d0eff', lw=1.2, label=self.id)
+        plt.legend()  
         plt.plot(self.wave, e_y, color = 'k', lw = 1.2) 
         plt.xticks(np.arange(0.5,5.5,step=0.5))
         plt.xlabel(r'$\lambda_{obs}\ [{\mu}m]$')
@@ -89,43 +78,73 @@ class spec(splat.Spectrum):
     #splat's normalize applies to self.wave and self.flux (fnu) by default
         #return super().normalize()
 
-def convertflux(spectrum):
-#PROCEED WITH CAUTION THIS IS NOT DONE LIKE AT ALLLLLLL
-#This function converts from your current flux type (fnu or flam) to the other. 
-#1st goal is to make this into to seperate functions in case you're already in the units you're attempting to convert to. 
-#2nd goal is to initialize a new spec object which holds the new flux type 
-    if spectrum.flux_label == r"$f_{\nu}\$":
-        if not spectrum.flux_unit == u.microjansky:
-            spectrum.flux_unit = u.microjansky
-            spectrum.flux = spectrum.flux.to(u.microjansky)
-            spectrum.noise = spectrum.noise.to(u.microjansky)
-        spectrum.flux = ((spectrum.flux * const.c)/(spectrum.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-        spectrum.noise = ((spectrum.noise * const.c)/(spectrum.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-        spectrum.flux_unit = (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)
-        spectrum.flux_label = r'$f_{\lambda}\$'
+#Below is a template for a convertflux method, which would update / change your current instance of spec if used:
+#This method does not create a new instance, it only updates your current (Use fnutoflam and flamtofnu for new instances) 
+        
+#    def convertflux(spectrum):
+#        if spectrum.flux_label == r"$f_{\nu}\$":
+#            if not spectrum.flux_unit == u.microjansky:
+#                spectrum.flux_unit = u.microjansky
+#                spectrum.flux = spectrum.flux.to(u.microjansky)
+#                spectrum.noise = spectrum.noise.to(u.microjansky)
+#            spectrum.flux = ((spectrum.flux * const.c)/(spectrum.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+#            spectrum.noise = ((spectrum.noise * const.c)/(spectrum.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+#            spectrum.flux_unit = (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)
+#            spectrum.flux_label = r'$f_{\lambda}\$'
+#            print(f"Flux has been converted to Flam with units {self.flux_unit}")
+#    
+#        elif spectrum.flux_label == r'$f_{\lambda}\$':
+#            if not spectrum.flux_unit == (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1):
+#                spectrum.flux_unit = (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)
+#                spectrum.flux = spectrum.flux.to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+#            spectrum.flux = ((spectrum.wave**2)*(spectrum.flux))/(const.c).to(u.microjansky)
+#            spectrum.noise = (((spectrum.wave**2)*(spectrum.noise))/(const.c)).to(u.microjansky)
+#            spectrum.flux_unit = u.microjansky
+#            spectrum.flux_label = r"$f_{\nu}\$"
+#            print(f"Flux has been converted to Fnu with units {self.flux_unit}")
+#        else:
+#            print("something has gone wrong")
 
-    elif spectrum.flux_label == r'$f_{\lambda}\$':
-        if not spectrum.flux_unit == (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1):
-            spectrum.flux_unit = (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)
-            spectrum.flux = spectrum.flux.to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-        spectrum.flux = ((spectrum.wave**2)*(spectrum.flux))/(const.c).to(u.microjansky)
-        spectrum.noise = (((spectrum.wave**2)*(spectrum.noise))/(const.c)).to(u.microjansky)
-        spectrum.flux_unit = u.microjansky
-        spectrum.flux_label = r"$f_{\nu}\$"
+def fnutoflam(spectrum):
+    newspec = spec(spectrum.file)
+    if newspec.flux_label == r"$f_{\nu}\$":
+        if not newspec.flux_unit == u.microjansky:
+            newspec.flux_unit = u.microjansky
+            newspec.flux = newspec.flux.to(u.microjansky)
+            newspec.noise = newspec.noise.to(u.microjansky)
+        newspec.flux = ((newspec.flux * const.c)/(newspec.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+        newspec.noise = ((newspec.noise * const.c)/(newspec.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+        newspec.flux_unit = (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)
+        newspec.flux_label = r'$f_{\lambda}\$'
+        print(f"Flux have been converted to Flam with units {newspec.flux_unit}")
+        return newspec
     else:
-        print("something has gone wrong")
+        print("Something has gone wrong")
+
+def flamtofnu(spectrum):
+    newspec = spec(spectrum.file)
+    if newspec.flux_label == r'$f_{\lambda}\$':
+        if not newspec.flux_unit == (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1):
+            newspec.flux_unit = (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)
+            newspec.flux = newspec.flux.to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+        newspec.flux = ((newspec.wave**2)*(newspec.flux))/(const.c).to(u.microjansky)
+        newspec.noise = (((newspec.wave**2)*(newspec.noise))/(const.c)).to(u.microjansky)
+        newspec.flux_unit = u.microjansky
+        newspec.flux_label = r"$f_{\nu}\$"
+        print(f"Flux have been converted to Fnu with units {newspec.flux_unit}")
+        return newspec
+    else:
+        print("Something has gone wrong")
 
 def normalizespec(spectrum):
     if type(spectrum) == spec:
         output = spec(spectrum.file)
-        output.flam_err = spectrum.flam_err / np.nanmax(spectrum.flam)
-        output.flam = spectrum.flam / np.nanmax(spectrum.flam)
         output.noise = spectrum.noise / np.nanmax(spectrum.flux)
         output.flux = spectrum.flux / np.nanmax(spectrum.flux)
     else: 
         print("Need a SPAT.spec object!")
 
-    return output 
+    return output  
 
 #def classifystandard(spec):
     #classifies by comparison to standard
@@ -150,34 +169,34 @@ def chisquare(spec1, spec2):
     chi_squared = 0
     alphanum = 0 
     alphadenom = 0
-    for i in range(len(spec1.flam)):
-        if not np.isnan(spec1.flam[i].value) or not np.isnan(spec2.flam[i].value):
-            alphanum += ((spec1.flam[i])*(spec2.flam[i])) / (spec1.flam_err[i]**2)
-            alphadenom += (spec2.flam[i]**2) / (spec1.flam_err[i]**2)
+    for i in range(len(spec1.flux)):
+        if not np.isnan(spec1.flux[i].value) or not np.isnan(spec2.flux[i].value):
+            alphanum += ((spec1.flux[i])*(spec2.flux[i])) / (spec1.noise[i]**2)
+            alphadenom += (spec2.flux[i]**2) / (spec1.noise[i]**2)
             alpha = alphanum / alphadenom
-            chi_squared += ((spec1.flam[i] - (alpha * spec2.flam[i])) / (spec1.flam_err[i]))**2
-    return chi_squared
-    #print(chi_squared)
+            chi_squared += ((spec1.flux[i] - (alpha * spec2.flux[i])) / (spec1.noise[i]))**2     
+            
+    return float(chi_squared)
+            #print(chi_squared)
 
 def compspec(spec1, spec2, err=True):
 
     #This function graphs two different spectra onto the same plot and calculates chi for a spectrum and a standard model
     #spec1 is intended as a source while spec2 is intended for a standard model
 
-    chi_squared = chisquare(spec1, spec2) 
+    chi_squared = chisquare(spec1, spec2)
     chisqr_formatted = ("{:.1f}".format(chi_squared))
-   
     #chi = (chi_squared)**(1/2)
     
     #this simply plots the graphs inputed; as a visual for chi
     plt.figure(figsize=(9,4))
     plt.xlabel(r'$\lambda_{obs}\ [{\mu}m]$')
     plt.ylabel(r'$f_{\lambda}\ [10^{-20}ergs^{-1}cm^{-2}\AA^{-1}]$')
-    plt.plot(spec1.wave, spec1.flam, label= spec1.id)
-    plt.plot(spec2.wave, spec2.flam, label= spec2.id)
-    plt.plot([],[], label = f"$\chi^{2}$ = {chisqr_formatted}", alpha = 0)
+    plt.plot(spec1.wave, spec1.flux, label= spec1.id)
+    plt.plot(spec2.wave, spec2.flux, label= spec2.id)
     if err==True:
-        plt.plot(spec1.wave, spec1.flam_err, label= spec1.e_id)
+        plt.plot(spec1.wave, spec1.noise, label= spec1.e_id)
+    plt.plot([],[], label = f"$\chi^{2}$ = {chisqr_formatted}", alpha = 0)
     plt.legend(fontsize = "medium")
     plt.show()
 
