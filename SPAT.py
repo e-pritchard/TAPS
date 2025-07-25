@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import splat
 import copy
+import pandas as pd
 
 #need to add general code path to standards folder for others to use our code (see ucdmcmc code parameters section)
 
