@@ -192,10 +192,12 @@ def alpha(spec1, spec2):
 def chisquare(spec1, spec2):
     #this is a bare bones chi
     #was modeled after sara's standard chi squared statistic
-    
+
     chi_squared = 0
-    alph = alpha(spec1, spec2)
-    chi_squared += ((spec1.flux[i] - (alpha * spec2.flux[i])) / (spec1.noise[i]))**2     
+    for i in range(len(spec1.flux)):
+        if not np.isnan(spec1.flux[i].value) or not np.isnan(spec2.flux[i].value):
+            alph = alpha(spec1, spec2)
+            chi_squared += ((spec1.flux[i] - (alph * spec2.flux[i])) / (spec1.noise[i]))**2     
             
     return float(chi_squared)
             #print(chi_squared)
