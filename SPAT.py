@@ -4,6 +4,7 @@ from astropy import constants as const
 import matplotlib.pyplot as plt
 import numpy as np
 import splat
+import copy
 
 class spec(splat.Spectrum):
     def __init__(self, file, read_file: bool = True, flxtype = "flam"):
@@ -24,9 +25,7 @@ class spec(splat.Spectrum):
             self.readfile()
 
     def readfile(self):
-        #THINKING OF UPDATING to specify flxtype in the readfile so that do not have to specify in multiple functions (also needs to be 
-        #updated with julia's code that will reduce number of steps)
-        #or have one default with a function to convert
+        
         #Opens the fits file & select index 1 (SPECID) where the data we wish to access lives
         data = fits.open(self.file)[1].data
     
@@ -40,9 +39,6 @@ class spec(splat.Spectrum):
             self.flux = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
             self.noise = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
             
-#        self.flam = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-#        self.flam_err = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-
         if "\\" in self.file:
             piecedir = self.file.split('\\')
             pieceper = piecedir[-1].split('.')
@@ -117,7 +113,7 @@ class spec(splat.Spectrum):
 #            print("something has gone wrong")
 
 def fnutoflam(spectrum):
-    newspec = spec(spectrum.file)
+    newspec = copy.deepcopy(spectrum)
     if newspec.flux_label == r"$f_{\nu}\$":
         if not newspec.flux_unit == u.microjansky:
             newspec.flux_unit = u.microjansky
@@ -133,7 +129,7 @@ def fnutoflam(spectrum):
         print("Something has gone wrong")
 
 def flamtofnu(spectrum):
-    newspec = spec(spectrum.file)
+    newspec = copy.deepcopy(spectrum)
     if newspec.flux_label == r'$f_{\lambda}\$':
         if not newspec.flux_unit == (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1):
             newspec.flux_unit = (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)
