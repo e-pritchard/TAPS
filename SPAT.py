@@ -6,6 +6,8 @@ import numpy as np
 import splat
 import copy
 
+#need to add general code path to standards folder for others to use our code (see ucdmcmc code parameters section)
+
 class spec(splat.Spectrum):
     def __init__(self, file, read_file: bool = True, flxtype = "flam"):
         self.file = file
