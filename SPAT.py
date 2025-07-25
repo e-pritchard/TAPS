@@ -194,7 +194,7 @@ def chisquare(spec1, spec2):
     #was modeled after sara's standard chi squared statistic
     
     chi_squared = 0
-    alpha = alpha(spec1, spec2)
+    alph = alpha(spec1, spec2)
     chi_squared += ((spec1.flux[i] - (alpha * spec2.flux[i])) / (spec1.noise[i]))**2     
             
     return float(chi_squared)
