@@ -161,21 +161,6 @@ def normalizespec(spectrum):
 
     return output   
 
-#def classifystandard(spec):
-    #classifies by comparison to standard
-    #think this only works for fnu because splat.classifyByStandard refers to self.wave & self.noise
-    #return splat.classifyByStandard(spec)
-
-def classifystandard(spec, standardset):
-    #classifies by comparison to standard
-    chisqr = 10000
-    for standard in standardset:
-        newchisqr = chisquare(spec, standard)
-        if newchisqr < chisqr:
-            chisqr = newchisqur
-            return chisqr
-
-#need to add classification by index & template
 
 def alpha(spec1, spec2):
     alphanum = 0 
@@ -203,6 +188,36 @@ def chisquare(spec1, spec2):
             
     return float(chi_squared)
             #print(chi_squared)
+
+
+def classifystandard(spec, standardset):
+    standardset = '/Users/marylin/Desktop/UCSD/STARTastro/SPURS/NIRSpec_PRISM_standards/'
+    chisquares = []
+    alphas = []
+    
+    for standard in os.listdir(standardset):
+        stan = pd.read_csv(standard)
+        stanwave = ourstandard['wave']
+        stanflx = ourstandard['flux']
+        alph = alpha(spec, standard)
+        chisqur = chisquare(spec, standard)
+    
+        chisquares.append(chisqur)
+        alphas.append(alph)
+        
+    chimin = np.min(chisquares)
+    alphmin = np.min(alphas)
+    
+    minindex = np.argmin(chisquares)
+    bestfit = standardset[minindex]
+
+    chisqr_formatted = ("{:.1f}".format(chimin))
+    alpha_formatted = ("{:.1f}".format(alphmin))
+                       
+    return f"$\chi^{2}$ = {chisqr_formatted}"
+    return f"$\alpha$ = {alpha_formatted}"
+    return "Best fit is" + bestfit
+
 
 def compspec(spec1, spec2, err=True):
 
