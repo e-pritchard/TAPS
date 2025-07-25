@@ -191,7 +191,7 @@ def chisquare(spec1, spec2):
 
 
 def classifystandard(spec, standardset):
-    standardset = '/Users/marylin/Desktop/UCSD/STARTastro/SPURS/NIRSpec_PRISM_standards/'
+    standardset = 'path to standards' #example: '/Users/marylin/Desktop/UCSD/STARTastro/SPURS/NIRSpec_PRISM_standards/'
     chisquares = []
     alphas = []
     
