@@ -123,7 +123,7 @@ def fnutoflam(spectrum):
         newspec.noise = ((newspec.noise * const.c)/(newspec.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
         newspec.flux_unit = (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)
         newspec.flux_label = r'$f_{\lambda}\$'
-        print(f"Flux have been converted to Flam with units {newspec.flux_unit}")
+        print(f"Flux has been converted to Flam with units {newspec.flux_unit}")
         return newspec
     else:
         print("Something has gone wrong")
@@ -138,7 +138,7 @@ def flamtofnu(spectrum):
         newspec.noise = (((newspec.wave**2)*(newspec.noise))/(const.c)).to(u.microjansky)
         newspec.flux_unit = u.microjansky
         newspec.flux_label = r"$f_{\nu}\$"
-        print(f"Flux have been converted to Fnu with units {newspec.flux_unit}")
+        print(f"Flux has been converted to Fnu with units {newspec.flux_unit}")
         return newspec
     else:
         print("Something has gone wrong")
