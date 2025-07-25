@@ -28,7 +28,9 @@ class spec(splat.Spectrum):
             self.readfile()
 
     def readfile(self):
-        
+        #THINKING OF UPDATING to specify flxtype in the readfile so that do not have to specify in multiple functions (also needs to be 
+        #updated with julia's code that will reduce number of steps)
+        #or have one default with a function to convert
         #Opens the fits file & select index 1 (SPECID) where the data we wish to access lives
         data = fits.open(self.file)[1].data
     
@@ -42,6 +44,9 @@ class spec(splat.Spectrum):
             self.flux = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
             self.noise = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
             
+#        self.flam = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+#        self.flam_err = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+
         if "\\" in self.file:
             piecedir = self.file.split('\\')
             pieceper = piecedir[-1].split('.')
@@ -126,7 +131,7 @@ def fnutoflam(spectrum):
         newspec.noise = ((newspec.noise * const.c)/(newspec.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
         newspec.flux_unit = (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)
         newspec.flux_label = r'$f_{\lambda}\$'
-        print(f"Flux has been converted to Flam with units {newspec.flux_unit}")
+        print(f"Flux have been converted to Flam with units {newspec.flux_unit}")
         return newspec
     else:
         print("Something has gone wrong")
@@ -137,11 +142,11 @@ def flamtofnu(spectrum):
         if not newspec.flux_unit == (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1):
             newspec.flux_unit = (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)
             newspec.flux = newspec.flux.to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-        newspec.flux = ((newspec.wave**2)*(newspec.flux))/(const.c).to(u.microjansky)
+        newspec.flux = (((newspec.wave**2)*(newspec.flux))/(const.c)).to(u.microjansky)
         newspec.noise = (((newspec.wave**2)*(newspec.noise))/(const.c)).to(u.microjansky)
         newspec.flux_unit = u.microjansky
         newspec.flux_label = r"$f_{\nu}\$"
-        print(f"Flux has been converted to Fnu with units {newspec.flux_unit}")
+        print(f"Flux have been converted to Fnu with units {newspec.flux_unit}")
         return newspec
     else:
         print("Something has gone wrong")
@@ -172,11 +177,7 @@ def classifystandard(spec, standardset):
 
 #need to add classification by index & template
 
-def chisquare(spec1, spec2):
-    #this is a bare bones chi
-    #was modeled after sara's standard chi squared statistic
-    
-    chi_squared = 0
+def alpha(spec1, spec2):
     alphanum = 0 
     alphadenom = 0
     for i in range(len(spec1.flux)):
@@ -184,7 +185,17 @@ def chisquare(spec1, spec2):
             alphanum += ((spec1.flux[i])*(spec2.flux[i])) / (spec1.noise[i]**2)
             alphadenom += (spec2.flux[i]**2) / (spec1.noise[i]**2)
             alpha = alphanum / alphadenom
-            chi_squared += ((spec1.flux[i] - (alpha * spec2.flux[i])) / (spec1.noise[i]))**2     
+            return alpha
+            
+
+
+def chisquare(spec1, spec2):
+    #this is a bare bones chi
+    #was modeled after sara's standard chi squared statistic
+    
+    chi_squared = 0
+    alpha = alpha(spe1, spec2)
+    chi_squared += ((spec1.flux[i] - (alpha * spec2.flux[i])) / (spec1.noise[i]))**2     
             
     return float(chi_squared)
             #print(chi_squared)
