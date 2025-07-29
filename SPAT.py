@@ -14,8 +14,8 @@ class spec(splat.Spectrum):
         self.file = file
         self.variance = []
         self.name_err = ""
-        self.name = ""
         self.history = []
+        self.instrument = "JWST-NIRSPEC-PRISM"
 
         if flxtype == "flam":
             self.flux_label = r'$f_{\lambda}\$'
@@ -27,40 +27,42 @@ class spec(splat.Spectrum):
         if read_file:
             self.readfile()
 
+
     def readfile(self):
         #THINKING OF UPDATING to specify flxtype in the readfile so that do not have to specify in multiple functions (also needs to be 
         #updated with julia's code that will reduce number of steps)
         #or have one default with a function to convert
         #Opens the fits file & select index 1 (SPECID) where the data we wish to access lives
-        data = fits.open(self.file)[1].data
-    
-        #Within data is 10 columns, we wish to access the columns titled, "wave", "flux", "err"
-        self.wave = data["wave"] * u.micron
-        self.flux = data["flux"] * u.microjansky #fnu
-        self.noise = data["err"] * u.microjansky #err_fnu
-        self.variance = self.noise**2
 
-        if self.flux_label == r'$f_{\lambda}\$':
-            self.flux = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-            self.noise = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+        if "fits" in file.name:
+    
+            data = fits.open(self.file)[1].data
+        
+            #Within data is 10 columns, we wish to access the columns titled, "wave", "flux", "err"
+            self.wave = data["wave"] * u.micron
+            self.flux = data["flux"] * u.microjansky #fnu
+            self.noise = data["err"] * u.microjansky #err_fnu
+            self.variance = self.noise**2
+    
+            if self.flux_label == r'$f_{\lambda}\$':
+                self.flux = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+                self.noise = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+
+            if "\\" in self.file:
+                piecedir = self.file.split('\\')
+                pieceper = piecedir[-1].split('.')
+                pieceundscr = pieceper[0].split('_')
+                self.name = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
+                self.name_err = "e_" + pieceundscr[3]
+            else:
+                pieceper = self.file.split('.')
+                pieceundscr = pieceper[0].split('_')
+                self.name = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
+                self.name_err = "e_" + pieceundscr[3]
+        
+        elif "csv" in file.name:
             
-#        self.flam = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-#        self.flam_err = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-
-        if "\\" in self.file:
-            piecedir = self.file.split('\\')
-            pieceper = piecedir[-1].split('.')
-            pieceundscr = pieceper[0].split('_')
-            self.name = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
-            self.name_err = "e_" + pieceundscr[3]
-        else:
-            pieceper = self.file.split('.')
-            pieceundscr = pieceper[0].split('_')
-            self.name = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
-            self.name_err = "e_" + pieceundscr[3]
     
-
-
     def plot(self):
     #plots the spectrum in either fnu or flam as specified
         if self.flux_label == r'$f_{\nu}\$':
@@ -72,12 +74,12 @@ class spec(splat.Spectrum):
 
         plt.figure(figsize=(9,4))
         plt.plot(self.wave, y, color='#5d0eff', lw=1.2, label=self.name)
-        plt.legend()  
         plt.plot(self.wave, e_y, color = 'k', lw = 1.2, label=self.name_err) 
         plt.xticks(np.arange(0.5,5.5,step=0.5))
         plt.xlabel(r'$\lambda_{obs}\ [{\mu}m]$')
         plt.ylabel(ylabel)
         plt.grid()
+        plt.legend()
         return plt.show()
 
 #Everything commented out below are obselete functions and no longer in use (but are saved incase the code is useful
