@@ -220,7 +220,7 @@ def classifystandard(specfile):
     alphas = []
     
     for standfile in os.listdir(standardset):
-        standard = spec(stanfile)
+        standard = spec(standfile)
         alph = alpha(spectrum, standard)
         chisqur = chisquare(spectrum, standard)
     
