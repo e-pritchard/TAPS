@@ -41,13 +41,13 @@ class spec(splat.Spectrum):
         #or have one default with a function to convert
         #Opens the fits file & select index 1 (SPECID) where the data we wish to access lives
 
-        if "fits" in file.name:
+        if "fits" in self.file:
             data = fits.open(self.file)[1].data
             self.wave = data['wave'] * u.micron
             self.flux = data['flux'] * u.microjansky #fnu
             self.noise = data["err"] * u.microjansky #err_fnu  
 
-        elif "csv" in file.name:
+        elif "csv" in self.file:
             data = pd.read_csv(self.file)
              self.wave = data['wave'].values * u.micron
             self.flux = data['flux'].values * u.microjansky #fnu
