@@ -45,36 +45,39 @@ class spec(splat.Spectrum):
             data = fits.open(self.file)[1].data
             self.wave = data['wave'] * u.micron
             self.flux = data['flux'] * u.microjansky #fnu
-            self.noise = data["err"] * u.microjansky #err_fnu  
+            self.noise = data["err"] * u.microjansky #err_fnu 
+            
+            if "/" in self.file:
+                piecedir = self.file.split('\\')
+                pieceper = piecedir[-1].split('.')
+                pieceundscr = pieceper[0].split('_')
+                self.name = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
+                self.name_err = "e_" + pieceundscr[3]
+            else:
+                pieceper = self.file.split('.')
+                pieceundscr = pieceper[0].split('_')
+                self.name = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
+                self.name_err = "e_" + pieceundscr[3]
+
 
         elif "csv" in self.file:
             data = pd.read_csv(self.file)
-             self.wave = data['wave'].values * u.micron
+            self.wave = data['wave'].values * u.micron
             self.flux = data['flux'].values * u.microjansky #fnu
             self.noise = data['unc'].values * u.microjansky #err_fnu
 
-        
-        self.variance = self.noise**2
         
     
         if self.flux_label == r'$f_{\lambda}\$':
             self.flux = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
             self.noise = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
 
-        if "\\" in self.file:
-            piecedir = self.file.split('\\')
-            pieceper = piecedir[-1].split('.')
-            pieceundscr = pieceper[0].split('_')
-            self.name = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
-            self.name_err = "e_" + pieceundscr[3]
-        else:
-            pieceper = self.file.split('.')
-            pieceundscr = pieceper[0].split('_')
-            self.name = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
-            self.name_err = "e_" + pieceundscr[3]
+        
+        self.variance = self.noise**2
+
+        
         
             
-    
     def plot(self):
     #plots the spectrum in either fnu or flam as specified
         if self.flux_label == r'$f_{\nu}\$':
