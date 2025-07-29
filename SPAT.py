@@ -35,32 +35,34 @@ class spec(splat.Spectrum):
         #Opens the fits file & select index 1 (SPECID) where the data we wish to access lives
 
         if "fits" in file.name:
-    
             data = fits.open(self.file)[1].data
-        
-            #Within data is 10 columns, we wish to access the columns titled, "wave", "flux", "err"
-            self.wave = data["wave"] * u.micron
-            self.flux = data["flux"] * u.microjansky #fnu
-            self.noise = data["err"] * u.microjansky #err_fnu
-            self.variance = self.noise**2
-    
-            if self.flux_label == r'$f_{\lambda}\$':
-                self.flux = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-                self.noise = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+            self.noise = data["err"] * u.microjansky #err_fnu  
 
-            if "\\" in self.file:
-                piecedir = self.file.split('\\')
-                pieceper = piecedir[-1].split('.')
-                pieceundscr = pieceper[0].split('_')
-                self.name = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
-                self.name_err = "e_" + pieceundscr[3]
-            else:
-                pieceper = self.file.split('.')
-                pieceundscr = pieceper[0].split('_')
-                self.name = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
-                self.name_err = "e_" + pieceundscr[3]
-        
         elif "csv" in file.name:
+            data = pd.read_csv(self.file)
+            self.noise = data['unc'] * u.microjansky #err_fnu
+               
+
+        self.wave = data['wave'] * u.micron
+        self.flux = data['flux'] * u.microjansky #fnu
+        self.variance = self.noise**2
+    
+        if self.flux_label == r'$f_{\lambda}\$':
+            self.flux = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+            self.noise = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+
+        if "\\" in self.file:
+            piecedir = self.file.split('\\')
+            pieceper = piecedir[-1].split('.')
+            pieceundscr = pieceper[0].split('_')
+            self.name = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
+            self.name_err = "e_" + pieceundscr[3]
+        else:
+            pieceper = self.file.split('.')
+            pieceundscr = pieceper[0].split('_')
+            self.name = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
+            self.name_err = "e_" + pieceundscr[3]
+        
             
     
     def plot(self):
