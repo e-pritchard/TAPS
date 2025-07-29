@@ -213,20 +213,20 @@ def chisquare(spec1, spec2):
             #print(chi_squared)
 
 
-def classifystandard(spec):
-    standardset = 'path to standards' #example: '/Users/marylin/Desktop/UCSD/STARTastro/SPURS/NIRSpec_PRISM_standards/'
+def classifystandard(specfile):
+    spectrum = spec(specfile)
+    standardset = '/Users/marylin/Desktop/UCSD/STARTastro/SPURS/NIRSpec_PRISM_standards/' #this needs to be general path directory
     chisquares = []
     alphas = []
     
-    for standard in os.listdir(standardset):
-        stan = pd.read_csv(standard)
-        stanwave = ourstandard['wave']
-        stanflx = ourstandard['flux']
-        alph = alpha(spec, standard)
-        chisqur = chisquare(spec, standard)
+    for standfile in os.listdir(standardset):
+        standard = spec(stanfile)
+        alph = alpha(spectrum, standard)
+        chisqur = chisquare(spectrum, standard)
     
         chisquares.append(chisqur)
         alphas.append(alph)
+    
         
     chimin = np.min(chisquares)
     alphmin = np.min(alphas)
