@@ -43,16 +43,19 @@ class spec(splat.Spectrum):
 
         if "fits" in file.name:
             data = fits.open(self.file)[1].data
+            self.wave = data['wave'] * u.micron
+            self.flux = data['flux'] * u.microjansky #fnu
             self.noise = data["err"] * u.microjansky #err_fnu  
 
         elif "csv" in file.name:
             data = pd.read_csv(self.file)
-            self.noise = data['unc'] * u.microjansky #err_fnu
-               
+             self.wave = data['wave'].values * u.micron
+            self.flux = data['flux'].values * u.microjansky #fnu
+            self.noise = data['unc'].values * u.microjansky #err_fnu
 
-        self.wave = data['wave'] * u.micron
-        self.flux = data['flux'] * u.microjansky #fnu
+        
         self.variance = self.noise**2
+        
     
         if self.flux_label == r'$f_{\lambda}\$':
             self.flux = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
