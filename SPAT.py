@@ -6,6 +6,13 @@ import numpy as np
 import splat
 import copy
 import pandas as pd
+import ucdmcmc
+from astropy.utils.data import download_file
+import copy
+import io
+import sys
+import contextlib
+%matplotlib inline
 
 #need to add general code path to standards folder for others to use our code (see ucdmcmc code parameters section)
 
@@ -245,3 +252,31 @@ def compspec(spec1, spec2, err=True):
     plt.show()
 
     return chi_squared
+
+def suppress_empty_figures(func, *args, **kwargs):
+    """Runs a function and closes only truly empty figures (0 axes)."""
+    before = set(plt.get_fignums())
+    f = io.StringIO()
+    with contextlib.redirect_stdout(f), contextlib.redirect_stderr(f):
+        result = func(*args, **kwargs)
+    after = set(plt.get_fignums())
+    new_figs = after - before
+    
+    for fig_num in new_figs:
+        fig = plt.figure(fig_num)
+        if len(fig.axes) == 0:
+            plt.close(fig_num)
+    # If the fig axes is 0, it will not be plotted
+    return result
+
+def fit_models_to_sources(source, model_name):
+    model, wave = ucdmcmc.getModelSet(model_name, 'JWST-NIRSPEC-PRISM')
+    sp = spec(source)
+    spsm = ucdmcmc.resample(sp, wave)
+
+    ipar = suppress_empty_figures(ucdmcmc.fitGrid, spsm, model, output='test')
+    par = suppress_empty_figures(ucdmcmc.fitMCMC, spsm, model, p0=ipar, nstep=1000, output='mcmctest_', verbose=False)
+
+    plt.show() 
+
+    return model_name
