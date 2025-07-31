@@ -286,9 +286,9 @@ def fit_models_to_sources(source, model_name):
     sp = spec(source)
     spsm = ucdmcmc.resample(sp, wave)
 
-    ipar = suppress_empty_figures(ucdmcmc.fitGrid, spsm, model, output='test')
-    par = suppress_empty_figures(ucdmcmc.fitMCMC, spsm, model, p0=ipar, nstep=1000, output='mcmctest_', verbose=False)
+    ipar = suppress_empty_figures(ucdmcmc.fitGrid, spsm, model, file_prefix=sp.name + model_name + "Gridfit", output="allvalues", report = True)
+    par = suppress_empty_figures(ucdmcmc.fitMCMC, spsm, model, p0=ipar, nstep=2500, file_prefix = sp.name + model_name + "_mcmc", output="all", verbose=False, report = True)
 
     plt.show() 
 
-    return model_name
+    return sp.name, model_name
