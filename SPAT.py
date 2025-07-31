@@ -215,14 +215,17 @@ def chisquare(spec1, spec2):
 flx = []
 flx.append(griddata(standard1.wave.value, standard1.flux.value, spec1.wave.value, method='linear',rescale=True))
 
-def classifystandard(specfile):
-    spectrum = spec(specfile)
+def classifystandard(spectrum):
     standardset = '/Users/marylin/Desktop/UCSD/STARTastro/SPURS/NIRSpec_PRISM_standards/' #this needs to be general path directory
     chisquares = []
     alphas = []
+    stanflxint = [] #list to hold interpolated standard flux
     
     for standfile in os.listdir(standardset):
         standard = spec(standfile)
+        stanflxint.append(griddata(standard.wave.value, standard.flux.value, spectrum.wave.value, method = 'linear', rescale = True)
+        standard.flux = np.array(stanflxint)
+        standard.wave = spectrum.wave
         alph = alpha(spectrum, standard)
         chisqur = chisquare(spectrum, standard)
     
