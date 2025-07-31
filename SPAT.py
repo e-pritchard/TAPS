@@ -212,6 +212,8 @@ def chisquare(spec1, spec2):
     return float(chi_squared)
             #print(chi_squared)
 
+flx = []
+flx.append(griddata(standard1.wave.value, standard1.flux.value, spec1.wave.value, method='linear',rescale=True))
 
 def classifystandard(specfile):
     spectrum = spec(specfile)
