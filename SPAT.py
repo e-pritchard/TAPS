@@ -12,6 +12,7 @@ import copy
 import io
 import sys
 import contextlib
+from scipy.interpolate import griddata
 %matplotlib inline
 
 #need to add general code path to standards folder for others to use our code (see ucdmcmc code parameters section)
