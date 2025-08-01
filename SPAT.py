@@ -211,6 +211,8 @@ def chisquare(spec1, spec2):
     return float(chi_squared)
             #print(chi_squared)
 
+#ADD REDUCED CHI SQUARE
+
 
 def classifystandard(spectrum):
     standardset = '/Users/marylin/Desktop/UCSD/STARTastro/SPURS/NIRSpec_PRISM_standards/' #this needs to be general path directory # PULL THIS OUT, SEPRATE FUNCTION TO STORE STANDARDS (ARRAY IN CODE TO STORE)
