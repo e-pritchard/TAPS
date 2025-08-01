@@ -9,7 +9,7 @@ import pandas as pd
 import ucdmcmc
 from astropy.utils.data import download_file
 import copy
-import io
+import os
 import sys
 import contextlib
 from scipy.interpolate import griddata
