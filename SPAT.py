@@ -45,7 +45,7 @@ class spec(splat.Spectrum):
         if "fits" in self.file:
             data = fits.open(self.file)[1].data
             self.wave = data['wave'] * u.micron
-            self.flux = data['flux'] * u.microjansky #fnu
+            self.flux = data['flux'] * u.microjansky #fnu #NORMALIZE
             self.noise = data["err"] * u.microjansky #err_fnu 
             
             if "/" in self.file:
@@ -64,7 +64,7 @@ class spec(splat.Spectrum):
         elif "csv" in self.file:
             data = pd.read_csv(self.file)
             self.wave = data['wave'].values * u.micron
-            self.flux = data['flux'].values * u.microjansky #fnu
+            self.flux = data['flux'].values * u.microjansky #fnu # READ IN STANDARD IN FLAM UNITS, NORMALIZE BY DIVIDING BY MAX VALUE
             self.noise = data['unc'].values * u.microjansky #err_fnu
 
             if "/" in self.file:
@@ -213,7 +213,7 @@ def chisquare(spec1, spec2):
 
 
 def classifystandard(spectrum):
-    standardset = '/Users/marylin/Desktop/UCSD/STARTastro/SPURS/NIRSpec_PRISM_standards/' #this needs to be general path directory
+    standardset = '/Users/marylin/Desktop/UCSD/STARTastro/SPURS/NIRSpec_PRISM_standards/' #this needs to be general path directory # PULL THIS OUT, SEPRATE FUNCTION TO STORE STANDARDS (ARRAY IN CODE TO STORE)
     chisquares = []
     alphas = []
     standnames = []
@@ -231,8 +231,7 @@ def classifystandard(spectrum):
     
         chisquares.append(chisqur)
         alphas.append(alph)
-
-    
+   
         
     chimin = np.min(chisquares)
     alphmin = np.min(alphas)
@@ -244,6 +243,7 @@ def classifystandard(spectrum):
     alpha_formatted = ("{:.1f}".format(alphmin))
                        
     return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfit
+    #ADD PLOTTING OPTION TO CLASSIFY BY STANDARD
 
 
 def compspec(spec1, spec2, err=True):
