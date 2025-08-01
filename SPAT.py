@@ -69,13 +69,11 @@ class spec(splat.Spectrum):
 
             if "/" in self.file:
                 piecedir = self.file.split('/')
-                pieceper = piecedir[-1].split('.')
-                pieceundscr = pieceper[0].split('_')
+                pieceundscr = piecedir[-1].split('_')
                 self.name = pieceundscr[1] + "_" + pieceundscr[2]
                 self.name_err = "e_" + pieceundscr[2]
             else:
-                pieceper = self.file.split('.')
-                pieceundscr = pieceper[0].split('_')
+                pieceundscr = self.file.split('_')
                 self.name = pieceundscr[1] + "_" + pieceundscr[2]
                 self.name_err = "e_" + pieceundscr[2]
     
@@ -190,7 +188,7 @@ def alpha(spec1, spec2):
     alphanum = 0 
     alphadenom = 0
     for i in range(len(spec1.flux)):
-        if not np.isnan(spec1.flux[i].value) or not np.isnan(spec2.flux[i].value):
+        if np.isfinite(spec1.flux[i].value) and np.isfinite(spec2.flux[i].value):
             alphanum += ((spec1.flux[i])*(spec2.flux[i])) / (spec1.noise[i]**2)
             alphadenom += (spec2.flux[i]**2) / (spec1.noise[i]**2)
             
@@ -207,42 +205,45 @@ def chisquare(spec1, spec2):
     alph = alpha(spec1, spec2)
     
     for i in range(len(spec1.flux)):
-        if not np.isnan(spec1.flux[i].value) or not np.isnan(spec2.flux[i].value):
+        if np.isfinite(spec1.flux[i].value) and np.isfinite(spec2.flux[i].value):
             chi_squared += ((spec1.flux[i] - (alph * spec2.flux[i])) / (spec1.noise[i]))**2     
             
     return float(chi_squared)
             #print(chi_squared)
 
+
 def classifystandard(spectrum):
     standardset = '/Users/marylin/Desktop/UCSD/STARTastro/SPURS/NIRSpec_PRISM_standards/' #this needs to be general path directory
     chisquares = []
     alphas = []
-    stanflxint = [] #list to hold interpolated standard flux
+    standnames = []
+    #stanflxint = [] #list to hold interpolated standard flux
     
     for standfile in os.listdir(standardset):
         standard = spec(standardset + standfile)
-        stanflxint.append(griddata(standard.wave.value, standard.flux.value, spectrum.wave.value, method = 'linear', rescale = True))
-        standard.flux = np.array(stanflxint)
-        standard.wave = spectrum.wave
+        standnames.append(standard.name)
+        
+        stanflxint = griddata(standard.wave, standard.flux, spectrum.wave, method = 'linear', rescale = True)
+        standard.flux = np.array(stanflxint) * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+        standard.wave = spectrum.wave 
         alph = alpha(spectrum, standard)
         chisqur = chisquare(spectrum, standard)
     
         chisquares.append(chisqur)
         alphas.append(alph)
+
     
         
     chimin = np.min(chisquares)
     alphmin = np.min(alphas)
     
     minindex = np.argmin(chisquares)
-    bestfit = standardset[minindex]
+    bestfit = standnames[minindex]
 
     chisqr_formatted = ("{:.1f}".format(chimin))
     alpha_formatted = ("{:.1f}".format(alphmin))
                        
-    return f"$\chi^{2}$ = {chisqr_formatted}"
-    return f"$\alpha$ = {alpha_formatted}"
-    return "Best fit is" + bestfit
+    return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfit
 
 
 def compspec(spec1, spec2, err=True):
@@ -250,23 +251,23 @@ def compspec(spec1, spec2, err=True):
     #This function graphs two different spectra onto the same plot and calculates chi for a spectrum and a standard model
     #spec1 is intended as a source while spec2 is intended for a standard model
 
-    chi_squared = chisquare(spec1, spec2)
-    chisqr_formatted = ("{:.1f}".format(chi_squared))
+    # chi_squared = chisquare(spec1, spec2)
+    # chisqr_formatted = ("{:.1f}".format(chi_squared))
     #chi = (chi_squared)**(1/2)
     
     #this simply plots the graphs inputed; as a visual for chi
     plt.figure(figsize=(9,4))
     plt.xlabel(r'$\lambda_{obs}\ [{\mu}m]$')
     plt.ylabel(r'$f_{\lambda}\ [10^{-20}ergs^{-1}cm^{-2}\AA^{-1}]$')
-    plt.plot(spec1.wave, spec1.flux, label= spec1.id)
-    plt.plot(spec2.wave, spec2.flux, label= spec2.id)
+    plt.plot(spec1.wave, spec1.flux, label= spec1.name)
+    plt.plot(spec2.wave, spec2.flux, label= spec2.name)
     if err==True:
-        plt.plot(spec1.wave, spec1.noise, label= spec1.e_id)
+        plt.plot(spec1.wave, spec1.noise, label= spec1.e_name)
     plt.plot([],[], label = f"$\chi^{2}$ = {chisqr_formatted}", alpha = 0)
     plt.legend(fontsize = "medium")
     plt.show()
 
-    return chi_squared
+    #return chi_squared
 
 def suppress_empty_figures(func, *args, **kwargs):
     """Runs a function and closes only truly empty figures (0 axes)."""
@@ -290,21 +291,8 @@ def fit_models_to_sources(source, model_name):
     spsm = ucdmcmc.resample(sp, wave)
 
     ipar = suppress_empty_figures(ucdmcmc.fitGrid, spsm, model, file_prefix=sp.name + model_name + "Gridfit", output="allvalues", report = True)
-    par = suppress_empty_figures(ucdmcmc.fitMCMC, spsm, model, p0=ipar, nstep=500, file_prefix = sp.name + model_name + "_mcmc", output="all", verbose=False, report = True)
+    par = suppress_empty_figures(ucdmcmc.fitMCMC, spsm, model, p0=ipar, nstep=2500, file_prefix = sp.name + model_name + "_mcmc", output="all", verbose=False, report = True)
 
     plt.show() 
-
-    # Print best-fit summary
-    best = par["best"]
-    print("\nBest fit model:")
-    print(f"\tmodel = {par['model'].name}")
-    #print(f"\tfsed = {best['fsed']}")
-    print(f"\tlogg = {float(best['logg'])}")
-    print(f"\tteff = {float(best['teff'])}")
-    print(f"\tz = {float(best['z'])}")
-    print(f"\tscale = {best['scale']}")
-    print(f"\tchis = {best['chis']}")
-    print(f"\tradius = {best['radius']}")
-    print(f"\tdof = {best['dof']}")
 
     return sp.name, model_name
