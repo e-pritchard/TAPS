@@ -290,8 +290,21 @@ def fit_models_to_sources(source, model_name):
     spsm = ucdmcmc.resample(sp, wave)
 
     ipar = suppress_empty_figures(ucdmcmc.fitGrid, spsm, model, file_prefix=sp.name + model_name + "Gridfit", output="allvalues", report = True)
-    par = suppress_empty_figures(ucdmcmc.fitMCMC, spsm, model, p0=ipar, nstep=2500, file_prefix = sp.name + model_name + "_mcmc", output="all", verbose=False, report = True)
+    par = suppress_empty_figures(ucdmcmc.fitMCMC, spsm, model, p0=ipar, nstep=500, file_prefix = sp.name + model_name + "_mcmc", output="all", verbose=False, report = True)
 
     plt.show() 
+
+    # Print best-fit summary
+    best = par["best"]
+    print("\nBest fit model:")
+    print(f"\tmodel = {par['model'].name}")
+    #print(f"\tfsed = {best['fsed']}")
+    print(f"\tlogg = {float(best['logg'])}")
+    print(f"\tteff = {float(best['teff'])}")
+    print(f"\tz = {float(best['z'])}")
+    print(f"\tscale = {best['scale']}")
+    print(f"\tchis = {best['chis']}")
+    print(f"\tradius = {best['radius']}")
+    print(f"\tdof = {best['dof']}")
 
     return sp.name, model_name
