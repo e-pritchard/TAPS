@@ -47,6 +47,7 @@ class spec(splat.Spectrum):
             self.wave = data['wave'] * u.micron
             self.flux = data['flux'] * u.microjansky #fnu #NORMALIZE
             self.noise = data["err"] * u.microjansky #err_fnu 
+            self.variance = self.noise**2
             
             if "/" in self.file:
                 piecedir = self.file.split('/')
