@@ -172,7 +172,7 @@ def flamtofnu(spectrum):
 
 def normalizespec(spectrum):
     if type(spectrum) == spec:
-        output = spec(spectrum.file)
+        output = copy.deepcopy(spectrum)
         output.noise = spectrum.noise / np.nanmax(spectrum.flux)
         output.flux = spectrum.flux / np.nanmax(spectrum.flux)
     else: 
