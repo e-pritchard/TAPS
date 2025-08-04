@@ -1,3 +1,4 @@
+# TAPS: Toolkit for Analysis of PRISM Spectra
 from astropy.io import fits
 import astropy.units as u
 from astropy import constants as const
