@@ -232,7 +232,6 @@ def classifystandard(spectrum):
     #stanflxint = [] #list to hold interpolated standard flux
     
     for standard in standardset:
-        
         stanflxint = griddata(standard.wave, standard.flux, spectrum.wave, method = 'linear', rescale = True)
         standard.flux = np.array(stanflxint) * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
         standard.wave = spectrum.wave 
