@@ -178,7 +178,7 @@ def normalizespec(spectrum):
         output.noise = spectrum.noise / np.nanmax(spectrum.flux)
         output.flux = spectrum.flux / np.nanmax(spectrum.flux)
     else: 
-        print("Need a SPAT.spec object!")
+        print("Need a TAPS.spec object!")
 
     return output   
 
