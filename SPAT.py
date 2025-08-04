@@ -37,9 +37,6 @@ class spec(splat.Spectrum):
 
 
     def readfile(self):
-        #THINKING OF UPDATING to specify flxtype in the readfile so that do not have to specify in multiple functions (also needs to be 
-        #updated with julia's code that will reduce number of steps)
-        #or have one default with a function to convert
         #Opens the fits file & select index 1 (SPECID) where the data we wish to access lives
 
         if "fits" in self.file:
@@ -60,12 +57,16 @@ class spec(splat.Spectrum):
                 self.name = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
                 self.name_err = "e_" + pieceundscr[3]
 
+            if self.flux_label == r'$f_{\lambda}\$':
+                self.flux = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+                self.noise = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+
 
         elif "csv" in self.file:
             data = pd.read_csv(self.file)
             self.wave = data['wave'].values * u.micron
-            self.flux = data['flux'].values * u.microjansky #fnu # READ IN STANDARD IN FLAM UNITS, NORMALIZE BY DIVIDING BY MAX VALUE
-            self.noise = data['unc'].values * u.microjansky #err_fnu
+            self.flux = data['flux'].values * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)) #flam NORMALIZE BY DIVIDING BY MAX VALUE
+            self.noise = data['unc'].values * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)) #err_flam
 
             if "/" in self.file:
                 piecedir = self.file.split('/')
@@ -76,10 +77,6 @@ class spec(splat.Spectrum):
                 pieceundscr = self.file.split('_')
                 self.name = pieceundscr[1] + "_" + pieceundscr[2]
                 self.name_err = "e_" + pieceundscr[2]
-    
-        if self.flux_label == r'$f_{\lambda}\$':
-            self.flux = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-            self.noise = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
 
         self.variance = self.noise**2
     
