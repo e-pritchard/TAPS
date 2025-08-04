@@ -16,7 +16,9 @@ import contextlib
 from scipy.interpolate import griddata
 %matplotlib inline
 
-#need to add general code path to standards folder for others to use our code (see ucdmcmc code parameters section)
+#code parameters
+CODE_PATH = os.path.dirname(os.path.abspath(__file__))+'/../'
+MODEL_FOLDER = os.path.join(CODE_PATH,'NIRSpec_PRISM_standards/')
 
 class spec(splat.Spectrum):
     def __init__(self, file, read_file: bool = True, flxtype = "flam"):
@@ -102,6 +104,14 @@ class spec(splat.Spectrum):
         plt.legend()
         return plt.show()
 
+
+#creating standardset array
+standardset = [] 
+for standfile in os.listdir(MODEL_FOLDER):
+    standard = spec(MODEL_FOLDER + standfile)
+    standardset.append(standard)
+       
+
 #Everything commented out below are obselete functions and no longer in use (but are saved incase the code is useful
 
 #        self.flam = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
@@ -141,6 +151,7 @@ class spec(splat.Spectrum):
 #            print(f"Flux has been converted to Fnu with units {self.flux_unit}")
 #        else:
 #            print("something has gone wrong")
+
 
 def fnutoflam(spectrum):
     newspec = copy.deepcopy(spectrum)
@@ -215,15 +226,12 @@ def chisquare(spec1, spec2):
 
 
 def classifystandard(spectrum):
-    standardset = '/Users/marylin/Desktop/UCSD/STARTastro/SPURS/NIRSpec_PRISM_standards/' #this needs to be general path directory # PULL THIS OUT, SEPRATE FUNCTION TO STORE STANDARDS (ARRAY IN CODE TO STORE)
     chisquares = []
     alphas = []
-    standnames = []
+    #standnames = []
     #stanflxint = [] #list to hold interpolated standard flux
     
-    for standfile in os.listdir(standardset):
-        standard = spec(standardset + standfile)
-        standnames.append(standard.name)
+    for standard in standardset:
         
         stanflxint = griddata(standard.wave, standard.flux, spectrum.wave, method = 'linear', rescale = True)
         standard.flux = np.array(stanflxint) * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
@@ -239,7 +247,7 @@ def classifystandard(spectrum):
     alphmin = np.min(alphas)
     
     minindex = np.argmin(chisquares)
-    bestfit = standnames[minindex]
+    bestfit = standardset[minindex].name
 
     chisqr_formatted = ("{:.1f}".format(chimin))
     alpha_formatted = ("{:.1f}".format(alphmin))
