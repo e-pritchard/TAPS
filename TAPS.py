@@ -66,7 +66,7 @@ class spec(splat.Spectrum):
             data = pd.read_csv(self.file)
             self.wave = data['wave'].values * u.micron
             self.flux = data['flux'].values * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)) #flam NORMALIZE BY DIVIDING BY MAX VALUE
-            self.noise = data['unc'].values * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)) #err_flam
+            self.noise = data['unc'].values * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)) #err_flam      
 
             if "/" in self.file:
                 piecedir = self.file.split('/')
@@ -79,6 +79,8 @@ class spec(splat.Spectrum):
                 self.name_err = "e_" + pieceundscr[2]
 
         self.variance = self.noise**2
+
+    
     
     def plot(self):
     #plots the spectrum in either fnu or flam as specified
