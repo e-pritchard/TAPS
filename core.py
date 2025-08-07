@@ -188,7 +188,7 @@ def flamtofnu(spectrum):
         print("Something has gone wrong")
 
 def normalizespec(spectrum):
-    if type(spectrum) == spec:
+    if type(spectrum) == spec or type(spectrum) == TAPS.spec:
         output = copy.deepcopy(spectrum)
         output.noise = spectrum.noise / np.nanmax(spectrum.flux)
         output.flux = spectrum.flux / np.nanmax(spectrum.flux)
@@ -229,17 +229,19 @@ def chisquare(spec1, spec2):
 
 
 def classifystandard(spectrum):
+    specnorm = normalizespec(spectrum) 
+    specnorm.flux = specnorm.flux * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
     chisquares = []
     alphas = []
     #standnames = []
     #stanflxint = [] #list to hold interpolated standard flux
     
     for standard in standardset:
-        stanflxint = griddata(standard.wave, standard.flux, spectrum.wave, method = 'linear', rescale = True)
+        stanflxint = griddata(standard.wave, standard.flux, specnorm.wave, method = 'linear', rescale = True)
         standard.flux = np.array(stanflxint) * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-        standard.wave = spectrum.wave 
-        alph = alpha(spectrum, standard)
-        chisqur = chisquare(spectrum, standard)
+        standard.wave = specnorm.wave 
+        alph = alpha(specnorm, standard)
+        chisqur = chisquare(specnorm, standard)
     
         chisquares.append(chisqur)
         alphas.append(alph)
