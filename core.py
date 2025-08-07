@@ -113,6 +113,13 @@ standardset = []
 for standfile in os.listdir(MODEL_FOLDER):
     standard = spec(MODEL_FOLDER + standfile)
     standardset.append(standard)
+
+standardsetint = []
+for standard in standardset:
+        stanflxint = griddata(standard.wave, standard.flux, specnorm.wave, method = 'linear', rescale = True)
+        standard.flux = np.array(stanflxint) * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+        standard.wave = specnorm.wave 
+
        
 
 #Everything commented out below are obselete functions and no longer in use (but are saved incase the code is useful
@@ -237,13 +244,9 @@ def classifystandard(spectrum):
     #standnames = []
     #stanflxint = [] #list to hold interpolated standard flux
     
-    for standard in standardset:
-        stanflxint = griddata(standard.wave, standard.flux, specnorm.wave, method = 'linear', rescale = True)
-        standard.flux = np.array(stanflxint) * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-        standard.wave = specnorm.wave 
+    for standard in standardsetint:
         alph = alpha(specnorm, standard)
         chisqur = chisquare(specnorm, standard)
-    
         chisquares.append(chisqur)
         alphas.append(alph)
    
@@ -252,12 +255,15 @@ def classifystandard(spectrum):
     alphmin = np.min(alphas)
     
     minindex = np.argmin(chisquares)
-    bestfit = standardset[minindex].name
+    bestfit = standardsetint[minindex]
+    bestfitname = bestfit.name
 
     chisqr_formatted = ("{:.1f}".format(chimin))
     alpha_formatted = ("{:.1f}".format(alphmin))
+
+    compspec(specnorm, bestfit)
                        
-    return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfit
+    return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
     #ADD PLOTTING OPTION TO CLASSIFY BY STANDARD
 
 
