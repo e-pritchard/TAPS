@@ -114,16 +114,17 @@ for standfile in os.listdir(MODEL_FOLDER):
     standard = spec(MODEL_FOLDER + standfile)
     standardset.append(standard)
 
-standardsetint = []
-for stan in standardset:
-        standard = copy.deepcopy(stan)
-        stanflxint = griddata(standard.wave, standard.flux, specnorm.wave, method = 'linear', rescale = True)
-        standard.flux = np.array(stanflxint) * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-        standard.wave = specnorm.wave 
-        standardsetint.append(standard)
-    
-
-       
+def interpolate(spectrum, stan):
+    standard = copy.deepcopy(stan)
+    stanflxint = griddata(standard.wave, standard.flux, spectrum.wave, method = 'linear', rescale = True)
+    standard.flux = np.array(stanflxint) * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+    standard.wave = spectrum.wave 
+    return standarddef interpolate(spectrum, stan):
+    standard = copy.deepcopy(stan)
+    stanflxint = griddata(standard.wave, standard.flux, spectrum.wave, method = 'linear', rescale = True)
+    standard.flux = np.array(stanflxint) * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+    standard.wave = spectrum.wave 
+    return standard       
 
 #Everything commented out below are obselete functions and no longer in use (but are saved incase the code is useful
 
@@ -239,38 +240,37 @@ def chisquare(spec1, spec2):
 
 
 def classifystandard(spectrum):
-    specnorm = normalizespec(spectrum) 
-    specnorm.flux = specnorm.flux * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-    specnorm.noise = specnorm.noise * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+    specnorm = normalizespec(spectrum)  
+    standnormlist = []
     chisquares = []
     alphas = []
     #standnames = []
     #stanflxint = [] #list to hold interpolated standard flux
     
     for standard in standardsetint:
-        alph = alpha(specnorm, standard)
-        chisqur = chisquare(specnorm, standard)
+        standnorm = normalizespec(standard)
+        alph = alpha(specnorm, standnorm)
+        chisqur = chisquare(specnorm, standnorm)
+        standnormlist.append(standnorm)
         chisquares.append(chisqur)
         alphas.append(alph)
    
         
     chimin = np.min(chisquares)
-    alphmin = np.min(alphas)
-    
     minindex = np.argmin(chisquares)
-    bestfit = standardsetint[minindex]
+    bestfit = standnormlist[minindex]
+    alphmin = alphas[minindex]
     bestfitname = bestfit.name
 
     chisqr_formatted = ("{:.1f}".format(chimin))
     alpha_formatted = ("{:.1f}".format(alphmin))
 
-    compspec(specnorm, bestfit)
-                       
+    compspec(specnorm, bestfit, alphmin)                
     return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
     #ADD PLOTTING OPTION TO CLASSIFY BY STANDARD
 
 
-def compspec(spec1, spec2, err=True):
+def compspec(spec1, spec2, alpha=1, err=True):
 
     #This function graphs two different spectra onto the same plot and calculates chi for a spectrum and a standard model
     #spec1 is intended as a source while spec2 is intended for a standard model
@@ -284,10 +284,10 @@ def compspec(spec1, spec2, err=True):
     plt.xlabel(r'$\lambda_{obs}\ [{\mu}m]$')
     plt.ylabel(r'$f_{\lambda}\ [10^{-20}ergs^{-1}cm^{-2}\AA^{-1}]$')
     plt.plot(spec1.wave, spec1.flux, label= spec1.name)
-    plt.plot(spec2.wave, spec2.flux, label= spec2.name)
+    plt.plot(spec2.wave, alpha*spec2.flux, label= spec2.name)
     if err==True:
-        plt.plot(spec1.wave, spec1.noise, label= spec1.e_name)
-    plt.plot([],[], label = f"$\chi^{2}$ = {chisqr_formatted}", alpha = 0)
+        plt.plot(spec1.wave, spec1.noise, label= spec1.name_err)
+    #plt.plot([],[], label = f"$\chi^{2}$ = {chisqr_formatted}", alpha = 0)
     plt.legend(fontsize = "medium")
     plt.show()
 
