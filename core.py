@@ -115,10 +115,13 @@ for standfile in os.listdir(MODEL_FOLDER):
     standardset.append(standard)
 
 standardsetint = []
-for standard in standardset:
+for stan in standardset:
+        standard = copy.deepcopy(stan)
         stanflxint = griddata(standard.wave, standard.flux, specnorm.wave, method = 'linear', rescale = True)
         standard.flux = np.array(stanflxint) * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
         standard.wave = specnorm.wave 
+        standardsetint.append(standard)
+    
 
        
 
