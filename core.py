@@ -231,6 +231,7 @@ def chisquare(spec1, spec2):
 def classifystandard(spectrum):
     specnorm = normalizespec(spectrum) 
     specnorm.flux = specnorm.flux * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+    specnorm.noise = specnorm.noise * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
     chisquares = []
     alphas = []
     #standnames = []
