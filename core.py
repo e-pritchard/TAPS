@@ -244,11 +244,13 @@ def classifystandard(spectrum):
     standnormlist = []
     chisquares = []
     alphas = []
+    standardsetint = []
     #standnames = []
     #stanflxint = [] #list to hold interpolated standard flux
     
-    for standard in standardsetint:
-        standnorm = normalizespec(standard)
+    for standard in standardset:
+        stanint = interpolate(spectrum, standard)
+        standnorm = normalizespec(stanint)
         alph = alpha(specnorm, standnorm)
         chisqur = chisquare(specnorm, standnorm)
         standnormlist.append(standnorm)
