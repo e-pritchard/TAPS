@@ -14,7 +14,6 @@ import os
 import sys
 import contextlib
 from scipy.interpolate import griddata
-%matplotlib inline
 
 #code parameters
 CODE_PATH = os.path.dirname(os.path.abspath(__file__))+'/../'
@@ -119,12 +118,8 @@ def interpolate(spectrum, stan):
     stanflxint = griddata(standard.wave, standard.flux, spectrum.wave, method = 'linear', rescale = True)
     standard.flux = np.array(stanflxint) * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
     standard.wave = spectrum.wave 
-    return standarddef interpolate(spectrum, stan):
-    standard = copy.deepcopy(stan)
-    stanflxint = griddata(standard.wave, standard.flux, spectrum.wave, method = 'linear', rescale = True)
-    standard.flux = np.array(stanflxint) * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-    standard.wave = spectrum.wave 
-    return standard       
+    return standard
+      
 
 #Everything commented out below are obselete functions and no longer in use (but are saved incase the code is useful
 
@@ -267,33 +262,77 @@ def classifystandard(spectrum):
     chisqr_formatted = ("{:.1f}".format(chimin))
     alpha_formatted = ("{:.1f}".format(alphmin))
 
-    compspec(specnorm, bestfit, alphmin)                
+    compspec(specnorm, bestfit, alphmin, chimin)                
     return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
     #ADD PLOTTING OPTION TO CLASSIFY BY STANDARD
 
 
-def compspec(spec1, spec2, alpha=1, err=True):
+# def compspec(spec1, spec2, alpha=1, err=True):
+
+#     #This function graphs two different spectra onto the same plot and calculates chi for a spectrum and a standard model
+#     #spec1 is intended as a source while spec2 is intended for a standard model
+
+#     # chi_squared = chisquare(spec1, spec2)
+#     # chisqr_formatted = ("{:.1f}".format(chi_squared))
+#     #chi = (chi_squared)**(1/2)
+    
+#     #this simply plots the graphs inputed; as a visual for chi
+
+#     plt.figure(figsize=(9,4))
+#     plt.xlabel(r'$\lambda_{obs}\ [{\mu}m]$')
+#     plt.ylabel(r'$f_{\lambda}\ [10^{-20}ergs^{-1}cm^{-2}\AA^{-1}]$')
+#     plt.plot(spec1.wave, spec1.flux, label= spec1.name, color = 'black', lw = 1.5)
+#     plt.plot(spec2.wave, alpha*spec2.flux, label= spec2.name, color = '#37CDFA', lw = 4, alpha = .7)
+#     if err==True:
+#         plt.plot(spec1.wave, spec1.noise, label= spec1.name_err, color = 'k', lw = 1.2)
+#     #plt.plot([],[], label = f"$\chi^{2}$ = {chisqr_formatted}", alpha = 0)
+#     plt.legend(fontsize = "medium")
+#     plt.show()
+
+#     #return chi_squared
+
+
+def compspec(spec1, spec2, alpha=1, chisqr = 1, err=True):
 
     #This function graphs two different spectra onto the same plot and calculates chi for a spectrum and a standard model
     #spec1 is intended as a source while spec2 is intended for a standard model
 
     # chi_squared = chisquare(spec1, spec2)
-    # chisqr_formatted = ("{:.1f}".format(chi_squared))
+    # alpha_formatted = ("{:.1f}".format(alpha))
+    # chisqr_formatted = ("{:.1f}".format(chisqr))
     #chi = (chi_squared)**(1/2)
     
-    #this simply plots the graphs inputed; as a visual for chi
-    plt.figure(figsize=(9,4))
-    plt.xlabel(r'$\lambda_{obs}\ [{\mu}m]$')
-    plt.ylabel(r'$f_{\lambda}\ [10^{-20}ergs^{-1}cm^{-2}\AA^{-1}]$')
-    plt.plot(spec1.wave, spec1.flux, label= spec1.name)
-    plt.plot(spec2.wave, alpha*spec2.flux, label= spec2.name)
-    if err==True:
-        plt.plot(spec1.wave, spec1.noise, label= spec1.name_err)
-    #plt.plot([],[], label = f"$\chi^{2}$ = {chisqr_formatted}", alpha = 0)
-    plt.legend(fontsize = "medium")
+     #this simply plots the graphs inputed; as a visual for chi
+
+    fig, axs = plt.subplots(2, 1, gridspec_kw={'height_ratios': [5, 1]}, figsize=(9, 5), sharex=True)  # 2, 1 for two rows one column
+
+    axs[0].tick_params(axis='y', labelsize=12)
+    axs[0].set_ylabel(r'$f_{\lambda}\ [10^{-20}ergs^{-1}cm^{-2}\AA^{-1}]$', fontsize = 13)
+    axs[0].axhline(0, color ='k', linestyle ='--', lw=1)
+    axs[0].plot(spec1.wave, spec1.flux, label = spec1.name, color = 'black', lw=1.5)
+    axs[0].plot(spec2.wave, alpha * spec2.flux, label = spec2.name.split('_')[0] + ' standard', color = '#37CDFA', lw = 4, alpha = 0.7)
+    
+    if err:
+        #axs[0].plot(spec1.wave, spec1.noise, label = spec1.name_err, color = 'grey', lw = 1.2)
+        axs[0].fill_between(spec1.wave.value, spec1.noise.value, -1*spec1.noise.value,
+                    color='k', alpha=0.3) 
+        
+    axs[0].plot([], [], ' ', label=r"$\alpha = %.1f, \ \chi^2 = %.1f$" % (alpha, chisqr))
+    # axs[0].plot([], [], ' ', label=fr"$\alpha$ = {alpha_formatted}")
+    # axs[0].plot([], [], ' ', label=fr"$\chi^2$ = {chisqr_formatted}")
+    axs[0].legend(fontsize = 13)
+
+
+    axs[1].tick_params(axis='both', labelsize=12)
+    axs[1].set_xlabel(r'$\lambda_{obs}\ [{\mu}m]$', fontsize = 13)
+    axs[1].set_ylabel(r'$\Delta$', fontsize = 13)
+    axs[1].axhline(0, color ='k', linestyle ='--', lw=1)
+    difference = spec1.flux - (alpha * spec2.flux)
+    axs[1].plot(spec1.wave, difference, color = 'k', lw = 1.5)
+
     plt.show()
 
-    #return chi_squared
+
 
 def suppress_empty_figures(func, *args, **kwargs):
     """Runs a function and closes only truly empty figures (0 axes)."""
