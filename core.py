@@ -231,6 +231,10 @@ def chisquare(spec1, spec2):
     return float(chi_squared)
             #print(chi_squared)
 
+def reducedchisquare(spec1, chisquare):
+    dof = len(spec1.wave) - 1
+    redchisqr = chisquare/dof
+    return redchisqr
 #ADD REDUCED CHI SQUARE
 
 
@@ -254,6 +258,7 @@ def classifystandard(spectrum):
    
         
     chimin = np.min(chisquares)
+    redchisqr = reducedchisquare(spectrum, chimin)
     minindex = np.argmin(chisquares)
     bestfit = standnormlist[minindex]
     alphmin = alphas[minindex]
@@ -262,7 +267,7 @@ def classifystandard(spectrum):
     chisqr_formatted = ("{:.1f}".format(chimin))
     alpha_formatted = ("{:.1f}".format(alphmin))
 
-    compspec(specnorm, bestfit, alphmin, chimin)                
+    compspec(specnorm, bestfit, alphmin, redchisqr)                
     return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
     #ADD PLOTTING OPTION TO CLASSIFY BY STANDARD
 
@@ -292,7 +297,7 @@ def classifystandard(spectrum):
 #     #return chi_squared
 
 
-def compspec(spec1, spec2, alpha=1, chisqr = 1, err=True):
+def compspec(spec1, spec2, alpha=1, redchisqr = 1, err=True):
 
     #This function graphs two different spectra onto the same plot and calculates chi for a spectrum and a standard model
     #spec1 is intended as a source while spec2 is intended for a standard model
@@ -317,7 +322,7 @@ def compspec(spec1, spec2, alpha=1, chisqr = 1, err=True):
         axs[0].fill_between(spec1.wave.value, spec1.noise.value, -1*spec1.noise.value,
                     color='k', alpha=0.3) 
         
-    axs[0].plot([], [], ' ', label=r"$\alpha = %.1f, \ \chi^2 = %.1f$" % (alpha, chisqr))
+    axs[0].plot([], [], ' ', label=r"$\alpha = %.1f, \ \chi_{r}^2 = %.1f$" % (alpha, redchisqr))
     # axs[0].plot([], [], ' ', label=fr"$\alpha$ = {alpha_formatted}")
     # axs[0].plot([], [], ' ', label=fr"$\chi^2$ = {chisqr_formatted}")
     axs[0].legend(fontsize = 13)
