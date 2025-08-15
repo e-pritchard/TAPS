@@ -18,6 +18,7 @@ from scipy.interpolate import griddata
 #code parameters
 CODE_PATH = os.path.dirname(os.path.abspath(__file__))+'/../'
 MODEL_FOLDER = os.path.join(CODE_PATH,'NIRSpec_PRISM_standards/')
+MODEL_FOLDER_SPEX = os.path.join(CODE_PATH,'NIR_standards/')
 
 class spec(splat.Spectrum):
     def __init__(self, file, read_file: bool = True, flxtype = "flam"):
@@ -66,11 +67,11 @@ class spec(splat.Spectrum):
                 self.variance = self.noise**2
 
 
-        elif "csv" in self.file:
+        elif "nirspec" in self.file and "csv" in self.file:
             data = pd.read_csv(self.file)
             self.wave = data['wave'].values * u.micron
             self.flux = data['flux'].values * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)) #flam NORMALIZE BY DIVIDING BY MAX VALUE
-            self.noise = data['unc'].values * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)) #err_flam  
+            self.noise = data['unc'].values * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)) #err_flam   
             self.variance = self.noise**2
 
             if "/" in self.file:
@@ -83,8 +84,22 @@ class spec(splat.Spectrum):
                 self.name = pieceundscr[1] + "_" + pieceundscr[2]
                 self.name_err = "e_" + pieceundscr[2]
 
+        elif "classify" in self.file and "csv" in self.file:
+            data = pd.read_csv(self.file)
+            self.wave = data['#WAVELENGTH'].values * u.micron
+            self.flux = data['FLUX'].values * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)) #flam NORMALIZE BY DIVIDING BY MAX VALUE
+            self.noise = data['UNCERTAINTY'].values * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)) #err_flam   
+            self.variance = self.noise**2
 
-
+            if "/" in self.file:
+                piecedir = self.file.split('/')
+                pieceundscr = piecedir[-1].split('_')
+                self.name = pieceundscr[1]
+                self.name_err = "e_" + pieceundscr[1]
+            else:
+                pieceundscr = self.file.split('_')
+                self.name = pieceundscr[1]
+                self.name_err = "e_" + pieceundscr[1]
     
     
     def plot(self):
@@ -112,6 +127,11 @@ standardset = []
 for standfile in os.listdir(MODEL_FOLDER):
     standard = spec(MODEL_FOLDER + standfile)
     standardset.append(standard)
+
+standardset_SPEX = []
+for standfile in os.listdir(MODEL_FOLDER_SPEX):
+    standard = spec(MODEL_FOLDER_SPEX + standfile)
+    standardset_SPEX.append(standard)
 
 def interpolate(spectrum, stan):
     standard = copy.deepcopy(stan)
