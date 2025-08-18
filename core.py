@@ -18,7 +18,7 @@ from scipy.interpolate import griddata
 #code parameters
 CODE_PATH = os.path.dirname(os.path.abspath(__file__))+'/../'
 MODEL_FOLDER = os.path.join(CODE_PATH,'NIRSpec_PRISM_standards/')
-MODEL_FOLDER_SPEX = os.path.join(CODE_PATH,'NIR_standards/')
+MODEL_FOLDER_NIR = os.path.join(CODE_PATH,'NIR_standards/')
 
 class spec(splat.Spectrum):
     def __init__(self, file, read_file: bool = True, flxtype = "flam"):
@@ -128,10 +128,10 @@ for standfile in os.listdir(MODEL_FOLDER):
     standard = spec(MODEL_FOLDER + standfile)
     standardset.append(standard)
 
-standardset_SPEX = []
-for standfile in os.listdir(MODEL_FOLDER_SPEX):
-    standard = spec(MODEL_FOLDER_SPEX + standfile)
-    standardset_SPEX.append(standard)
+standardset_NIR = []
+for standfile in os.listdir(MODEL_FOLDER_NIR):
+    standard = spec(MODEL_FOLDER_NIR + standfile)
+    standardset_NIR.append(standard)
 
 def interpolate(spectrum, stan):
     standard = copy.deepcopy(stan)
@@ -257,6 +257,15 @@ def reducedchisquare(spec1, chisquare):
     return redchisqr
 #ADD REDUCED CHI SQUARE
 
+def trim(spectrum, rng):
+    spec = copy.deepcopy(spectrum)
+    mask = np.zeros(len(spec.wave))
+    mask[np.where(np.logical_and(spec.wave.value > rng[0],spec.wave.value < rng[1]))] = 1
+    spec.wave = spec.wave[mask == 1]
+    spec.flux = spec.flux[mask == 1]
+    spec.noise = spec.noise[mask == 1]
+    spec.variance = spec.variance[mask == 1]
+    return spec
 
 def classifystandard(spectrum):
     specnorm = normalizespec(spectrum)  
@@ -289,33 +298,41 @@ def classifystandard(spectrum):
 
     compspec(specnorm, bestfit, alphmin, redchisqr)                
     return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
-    #ADD PLOTTING OPTION TO CLASSIFY BY STANDARD
 
 
-# def compspec(spec1, spec2, alpha=1, err=True):
-
-#     #This function graphs two different spectra onto the same plot and calculates chi for a spectrum and a standard model
-#     #spec1 is intended as a source while spec2 is intended for a standard model
-
-#     # chi_squared = chisquare(spec1, spec2)
-#     # chisqr_formatted = ("{:.1f}".format(chi_squared))
-#     #chi = (chi_squared)**(1/2)
+def classifystandard_NIR(spectrum):
+    specnorm = normalizespec(spectrum)  
+    standnormlist = []
+    chisquares = []
+    alphas = []
+    standardsetint = []
+    #standnames = []
+    #stanflxint = [] #list to hold interpolated standard flux
     
-#     #this simply plots the graphs inputed; as a visual for chi
+    for standard in standardset_NIR:
+        rng = [np.nanmin(spectrum.wave.value), np.nanmax(spectrum.wave.value)]
+        specnorm = trim(specnorm, rng)
+        stanint = interpolate(specnorm, standard)
+        standnorm = normalizespec(stanint)
+        alph = alpha(specnorm, standnorm)
+        chisqur = chisquare(specnorm, standnorm)
+        standnormlist.append(standnorm)
+        chisquares.append(chisqur)
+        alphas.append(alph)
+   
+        
+    chimin = np.min(chisquares)
+    redchisqr = reducedchisquare(spectrum, chimin)
+    minindex = np.argmin(chisquares)
+    bestfit = standnormlist[minindex]
+    alphmin = alphas[minindex]
+    bestfitname = bestfit.name
 
-#     plt.figure(figsize=(9,4))
-#     plt.xlabel(r'$\lambda_{obs}\ [{\mu}m]$')
-#     plt.ylabel(r'$f_{\lambda}\ [10^{-20}ergs^{-1}cm^{-2}\AA^{-1}]$')
-#     plt.plot(spec1.wave, spec1.flux, label= spec1.name, color = 'black', lw = 1.5)
-#     plt.plot(spec2.wave, alpha*spec2.flux, label= spec2.name, color = '#37CDFA', lw = 4, alpha = .7)
-#     if err==True:
-#         plt.plot(spec1.wave, spec1.noise, label= spec1.name_err, color = 'k', lw = 1.2)
-#     #plt.plot([],[], label = f"$\chi^{2}$ = {chisqr_formatted}", alpha = 0)
-#     plt.legend(fontsize = "medium")
-#     plt.show()
+    chisqr_formatted = ("{:.1f}".format(chimin))
+    alpha_formatted = ("{:.1f}".format(alphmin))
 
-#     #return chi_squared
-
+    compspec(specnorm, bestfit, alphmin, redchisqr)                
+    return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
 
 def compspec(spec1, spec2, alpha=1, redchisqr = 1, err=True):
 
