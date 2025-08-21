@@ -300,7 +300,7 @@ def classifystandard(spectrum):
     return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
 
 
-def classifystandard_NIR(spectrum):
+def classifystandard_NIR(spectrum): #This 
     specnorm = normalizespec(spectrum)  
     standnormlist = []
     chisquares = []
@@ -310,8 +310,6 @@ def classifystandard_NIR(spectrum):
     #stanflxint = [] #list to hold interpolated standard flux
     
     for standard in standardset_NIR:
-        rng = [np.nanmin(spectrum.wave.value), np.nanmax(spectrum.wave.value)]
-        specnorm = trim(specnorm, rng)
         stanint = interpolate(specnorm, standard)
         standnorm = normalizespec(stanint)
         alph = alpha(specnorm, standnorm)
@@ -333,6 +331,53 @@ def classifystandard_NIR(spectrum):
 
     compspec(specnorm, bestfit, alphmin, redchisqr)                
     return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
+    #ADD PLOTTING OPTION TO CLASSIFY BY STANDARD
+
+#------------------------------------------------------------------------------------------------
+
+#this iteration I tried interpolating over the standard rather than the spectrum but it broke the alpha function in the process
+# def classifystandard_new(spectrum):
+#     specnorm = normalizespec(spectrum)  
+#     standnormlist = []
+#     chisquares = []
+#     alphas = []
+#     standardsetint = []
+#     #standnames = []
+#     #stanflxint = [] #list to hold interpolated standard flux
+    
+#     for standard in standardset_NIR:
+#         #print(f"Standard Length before interpolation" + str(len(standard.wave)))
+#         #print(f"Spectrum Length before interpolation" + str(len(specnorm.wave)))
+#         specint = interpolate(standard, specnorm)
+#         specint_noise = griddata(spec1.wave, spec1.noise, standard.wave, method = 'linear', rescale = True)
+#         specint.noise = np.array(specint_noise) * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+#         #print(20*"-")
+#         #print(f"Spec Length after interpolation" + str(len(specint.wave)))
+#         #print(f"Standard Length after interpolation" + str(len(standard.wave)))
+#         standnorm = normalizespec(standard)
+#         specint_norm = normalizespec(specint)
+#         alph = alpha(specint_norm, standnorm)
+#         chisqur = chisquare(specint_norm, standnorm)
+#         standnormlist.append(standnorm)
+#         chisquares.append(chisqur)
+#         alphas.append(alph)
+   
+        
+    # chimin = np.min(chisquares)
+    # redchisqr = reducedchisquare(specint_norm, chimin)
+    # minindex = np.argmin(chisquares)
+    # bestfit = standnormlist[minindex]
+    # alphmin = alphas[minindex]
+    # bestfitname = bestfit.name
+
+    # chisqr_formatted = ("{:.1f}".format(chimin))
+    # alpha_formatted = ("{:.1f}".format(alphmin))
+
+    # compspec(specint_norm, bestfit, alphmin, redchisqr)                
+    # return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
+    # #ADD PLOTTING OPTION TO CLASSIFY BY STANDARD
+
+#---------------------------------------------------------------------------------------------------------------------
 
 def compspec(spec1, spec2, alpha=1, redchisqr = 1, err=True):
 
