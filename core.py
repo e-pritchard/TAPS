@@ -124,12 +124,23 @@ class spec(splat.Spectrum):
             
             data = pd.DataFrame(data=df_dict)
             self.wave = data['wave'].values * u.AA
+            self.wave = self.wave.to(u.micron)
             self.flux = data['flux'].values * u.microjansky #I DO NOT KNOW THE REAL UNITS OF FLUX FOR THE 4 SOURCES!
             #-----------------------------------------------------------------------------------------------------
             self.noise = data['flux'].values * u.microjansky #err_fnu
             #---------------------------------------------------------------------------
             #BE WARE BE WARE BE WARE BE WARE
             #currently do not have uncertainty for luhman sources! THIS IS JUST SO SOURCES CAN BE READ
+            self.variance = self.noise**2
+
+            if self.flux_label == r'$f_{\lambda}\$':
+                self.flux = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+                self.noise = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+                self.variance = self.noise**2
+            
+            piecedot = self.file.split('.')
+            self.name = piecedot[0]
+
     
     
     def plot(self):
