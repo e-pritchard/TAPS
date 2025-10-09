@@ -100,6 +100,36 @@ class spec(splat.Spectrum):
                 pieceundscr = self.file.split('_')
                 self.name = pieceundscr[1]
                 self.name_err = "e_" + pieceundscr[1]
+
+        elif "txt" in self.file:
+            df_read = pd.read_csv(self.file)
+            wrong_header = df_read.columns
+            header_values = wrong_header.values
+            header_split = header_values[0].split("  ")
+            header_split[0] = float(header_split[0])
+            header_split[1] = float(header_split[1])
+            
+            wave_list = []
+            flux_list = []
+            wave_list.append(header_split[0])
+            flux_list.append(header_split[1])
+            
+            for i in range(len(df_read)):
+                value_split = df_read.iloc[i,0].split("  ")
+                value_split[0] = float(value_split[0])
+                value_split[1] = float(value_split[1])
+                wave_list.append(value_split[0])
+                flux_list.append(value_split[1])
+            df_dict = {"wave" : wave_list , "flux" : flux_list}
+            
+            data = pd.DataFrame(data=df_dict)
+            self.wave = data['wave'].values * u.AA
+            self.flux = data['flux'].values * u.microjansky #I DO NOT KNOW THE REAL UNITS OF FLUX FOR THE 4 SOURCES!
+            #-----------------------------------------------------------------------------------------------------
+            self.noise = data['flux'].values * u.microjansky #err_fnu
+            #---------------------------------------------------------------------------
+            #BE WARE BE WARE BE WARE BE WARE
+            #currently do not have uncertainty for luhman sources! THIS IS JUST SO SOURCES CAN BE READ
     
     
     def plot(self):
