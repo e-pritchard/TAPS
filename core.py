@@ -495,3 +495,56 @@ def fit_models_to_sources(source, model_name):
     plt.show() 
 
     return sp.name, model_name
+
+
+
+#PROBLEM 2
+
+def x_HI(T, P):
+    Z_rot = 0
+    I = 1.67*10**(-41)*u.cm**2 *u.g
+    j = 0
+    while j <= 100:
+        if (j%2) == 0:
+            Z_rot += (2*j + 1)*np.exp(-(j*(j+1))*const.hbar**2 / (I*const.k_B*T*u.K).decompose())
+            j += 1
+        elif (j%2) != 0:
+            Z_rot += 3*(2*j + 1)*np.exp(-j*(j+1)*const.hbar**2 / (I*const.k_B*T*u.K).decompose())
+            j += 1
+    
+    Z_elec_H2 = 1 + np.exp(-4.52*u.eV/(const.k_B*T*u.K))
+    
+    Z_elec_HI = 0
+    E_ion = 13.6*u.eV
+    n = 1
+    n_max = ((const.k_B*T*u.K)**(1/3) / (2*((P*u.erg/u.cm**3)**(1/3))*const.a0))**(1/2)
+    while n <= (n_max//1):
+        Z_elec_HI += 4*(n)*np.exp((-E_ion*(1-(1/n**2))/ (const.k_B*T*u.K)))
+        n += 1
+    
+    m = 2*const.m_p
+    Z_tra = (2*np.pi*m*const.k_B*T*u.K / const.h**2)**(3/2) * (const.k_B * T*u.K) / (P*u.erg / u.cm**3)
+    
+    Z_vib = 0
+    n = 0
+    w_vib = 3.8*10**14 * u.Hz
+    while n <= 100:
+        Z_vib += np.exp(-(n+0.5)*const.hbar*w_vib / (const.k_B * T*u.K))
+        n+=1
+    
+    C = (np.pi*const.m_p *const.k_B *T* u.K/ const.h**2)**(3/2) * const.k_B * T*u.K * Z_elec_HI**2 * np.exp(-4.52*u.eV/ (const.k_B*T*u.K)) / ((P*u.erg/u.cm**3)*Z_elec_H2*Z_vib*Z_rot)
+    
+    x = (-C + (C**2 + 4*C)**(1/2)) / 2
+    
+    return x
+
+temp_array = np.logspace(2, 5, 100)
+pressure_array = np.logspace(0, 13, 100)
+
+x_matrix = np.full([len(temp_array), len(pressure_array)], np.nan)
+
+for i, P in enumerate(pressure_array):
+    for j, T in enumerate(temp_array):
+        x_matrix[i,j] = x_HI(T,P)
+
+x
