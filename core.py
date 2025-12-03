@@ -1,19 +1,18 @@
 # TAPS: Toolkit for Analysis of PRISM Spectra
-from astropy.io import fits
-import astropy.units as u
-from astropy import constants as const
-import matplotlib.pyplot as plt
-import numpy as np
-import splat
-import copy
 import pandas as pd
-import ucdmcmc
-from astropy.utils.data import download_file
+import numpy as np
+import matplotlib.pyplot as plt
 import copy
 import os
 import sys
 import contextlib
+from astropy.io import fits
+import astropy.units as u
+from astropy import constants as const
+from astropy.utils.data import download_file
 from scipy.interpolate import griddata
+# import splat
+# import ucdmcmc
 
 #code parameters
 CODE_PATH = os.path.dirname(os.path.abspath(__file__))+'/../'
@@ -101,45 +100,45 @@ class spec(splat.Spectrum):
                 self.name = pieceundscr[1]
                 self.name_err = "e_" + pieceundscr[1]
 
-        elif "txt" in self.file:
-            df_read = pd.read_csv(self.file)
-            wrong_header = df_read.columns
-            header_values = wrong_header.values
-            header_split = header_values[0].split("  ")
-            header_split[0] = float(header_split[0])
-            header_split[1] = float(header_split[1])
+        # elif "txt" in self.file:
+        #     df_read = pd.read_csv(self.file)
+        #     wrong_header = df_read.columns
+        #     header_values = wrong_header.values
+        #     header_split = header_values[0].split("  ")
+        #     header_split[0] = float(header_split[0])
+        #     header_split[1] = float(header_split[1])
             
-            wave_list = []
-            flux_list = []
-            wave_list.append(header_split[0])
-            flux_list.append(header_split[1])
+        #     wave_list = []
+        #     flux_list = []
+        #     wave_list.append(header_split[0])
+        #     flux_list.append(header_split[1])
             
-            for i in range(len(df_read)):
-                value_split = df_read.iloc[i,0].split("  ")
-                value_split[0] = float(value_split[0])
-                value_split[1] = float(value_split[1])
-                wave_list.append(value_split[0])
-                flux_list.append(value_split[1])
-            df_dict = {"wave" : wave_list , "flux" : flux_list}
+        #     for i in range(len(df_read)):
+        #         value_split = df_read.iloc[i,0].split("  ")
+        #         value_split[0] = float(value_split[0])
+        #         value_split[1] = float(value_split[1])
+        #         wave_list.append(value_split[0])
+        #         flux_list.append(value_split[1])
+        #     df_dict = {"wave" : wave_list , "flux" : flux_list}
             
-            data = pd.DataFrame(data=df_dict)
-            self.wave = data['wave'].values * u.AA
-            self.wave = self.wave.to(u.micron)
-            self.flux = data['flux'].values * u.microjansky #I DO NOT KNOW THE REAL UNITS OF FLUX FOR THE 4 SOURCES!
-            #-----------------------------------------------------------------------------------------------------
-            self.noise = data['flux'].values * u.microjansky #err_fnu
-            #---------------------------------------------------------------------------
-            #BE WARE BE WARE BE WARE BE WARE
-            #currently do not have uncertainty for luhman sources! THIS IS JUST SO SOURCES CAN BE READ
-            self.variance = self.noise**2
+        #     data = pd.DataFrame(data=df_dict)
+        #     self.wave = data['wave'].values * u.AA
+        #     self.wave = self.wave.to(u.micron)
+        #     self.flux = data['flux'].values * u.microjansky #I DO NOT KNOW THE REAL UNITS OF FLUX FOR THE 4 SOURCES!
+        #     #-----------------------------------------------------------------------------------------------------
+        #     self.noise = data['flux'].values * u.microjansky #err_fnu
+        #     #---------------------------------------------------------------------------
+        #     #BE WARE BE WARE BE WARE BE WARE
+        #     #currently do not have uncertainty for luhman sources! THIS IS JUST SO SOURCES CAN BE READ
+        #     self.variance = self.noise**2
 
-            if self.flux_label == r'$f_{\lambda}\$':
-                self.flux = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-                self.noise = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-                self.variance = self.noise**2
+        #     if self.flux_label == r'$f_{\lambda}\$':
+        #         self.flux = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+        #         self.noise = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
+        #         self.variance = self.noise**2
             
-            piecedot = self.file.split('.')
-            self.name = piecedot[0]
+        #     piecedot = self.file.split('.')
+        #     self.name = piecedot[0]
 
     
     
@@ -180,47 +179,6 @@ def interpolate(spectrum, stan):
     standard.flux = np.array(stanflxint) * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
     standard.wave = spectrum.wave 
     return standard
-      
-
-#Everything commented out below are obselete functions and no longer in use (but are saved incase the code is useful
-
-#        self.flam = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-#        self.flam_err = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-
-    #def normalize(self):
-    #NEED TO UPDATE THIS (don't wan't it to actually update the spec object). may just write our own code here
-    #this allows both flam and fnu to become normalized
-        #self.flam_err = self.flam_err / np.nanmax(self.flam)
-        #self.flam = self.flam / np.nanmax(self.flam)
-    #splat's normalize applies to self.wave and self.flux (fnu) by default
-        #return super().normalize()
-
-#Below is a template for a convertflux method, which would update / change your current instance of spec if used:
-#This method does not create a new instance, it only updates your current (Use fnutoflam and flamtofnu for new instances) 
-        
-#    def convertflux(spectrum):
-#        if spectrum.flux_label == r"$f_{\nu}\$":
-#            if not spectrum.flux_unit == u.microjansky:
-#                spectrum.flux_unit = u.microjansky
-#                spectrum.flux = spectrum.flux.to(u.microjansky)
-#                spectrum.noise = spectrum.noise.to(u.microjansky)
-#            spectrum.flux = ((spectrum.flux * const.c)/(spectrum.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-#            spectrum.noise = ((spectrum.noise * const.c)/(spectrum.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-#            spectrum.flux_unit = (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)
-#            spectrum.flux_label = r'$f_{\lambda}\$'
-#            print(f"Flux has been converted to Flam with units {self.flux_unit}")
-#    
-#        elif spectrum.flux_label == r'$f_{\lambda}\$':
-#            if not spectrum.flux_unit == (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1):
-#                spectrum.flux_unit = (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)
-#                spectrum.flux = spectrum.flux.to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-#            spectrum.flux = ((spectrum.wave**2)*(spectrum.flux))/(const.c).to(u.microjansky)
-#            spectrum.noise = (((spectrum.wave**2)*(spectrum.noise))/(const.c)).to(u.microjansky)
-#            spectrum.flux_unit = u.microjansky
-#            spectrum.flux_label = r"$f_{\nu}\$"
-#            print(f"Flux has been converted to Fnu with units {self.flux_unit}")
-#        else:
-#            print("something has gone wrong")
 
 
 def fnutoflam(spectrum):
@@ -279,9 +237,7 @@ def alpha(spec1, spec2):
 
 
 def chisquare(spec1, spec2):
-    #this is a bare bones chi
-    #was modeled after sara's standard chi squared statistic
-
+   
     chi_squared = 0
     alph = alpha(spec1, spec2)
     
@@ -290,13 +246,11 @@ def chisquare(spec1, spec2):
             chi_squared += ((spec1.flux[i] - (alph * spec2.flux[i])) / (spec1.noise[i]))**2     
             
     return float(chi_squared)
-            #print(chi_squared)
 
 def reducedchisquare(spec1, chisquare):
     dof = len(spec1.wave) - 1
     redchisqr = chisquare/dof
     return redchisqr
-#ADD REDUCED CHI SQUARE
 
 def trim(spectrum, rng):
     spec = copy.deepcopy(spectrum)
@@ -314,8 +268,6 @@ def classifystandard(spectrum):
     chisquares = []
     alphas = []
     standardsetint = []
-    #standnames = []
-    #stanflxint = [] #list to hold interpolated standard flux
     
     for standard in standardset:
         stanint = interpolate(spectrum, standard)
@@ -325,7 +277,6 @@ def classifystandard(spectrum):
         standnormlist.append(standnorm)
         chisquares.append(chisqur)
         alphas.append(alph)
-   
         
     chimin = np.min(chisquares)
     redchisqr = reducedchisquare(spectrum, chimin)
@@ -386,49 +337,8 @@ def classifystandard_NIR(spectrum):
     return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
     #ADD PLOTTING OPTION TO CLASSIFY BY STANDARD
 
-#------------------------------------------------------------------------------------------------
-
-# def classifystandard_NIR_og(spectrum): 
-    #This iteration does not take into account the usable range of the NIR standards
-    #This iteration's reduced chi squared is less accurate as it includes unused points
-    #This iteration plots the wave range 0.5-5.0 microns
-#     specnorm = normalizespec(spectrum)  
-#     standnormlist = []
-#     chisquares = []
-#     alphas = []
-#     standardsetint = []
-#     #standnames = []
-#     #stanflxint = [] #list to hold interpolated standard flux
-    
-#     for standard in standardset_NIR:
-#         stanint = interpolate(specnorm, standard)
-#         standnorm = normalizespec(stanint)
-#         alph = alpha(specnorm, standnorm)
-#         chisqur = chisquare(specnorm, standnorm)
-#         standnormlist.append(standnorm)
-#         chisquares.append(chisqur)
-#         alphas.append(alph)
-   
-        
-#     chimin = np.min(chisquares)
-#     redchisqr = reducedchisquare(spectrum, chimin)
-#     minindex = np.argmin(chisquares)
-#     bestfit = standnormlist[minindex]
-#     alphmin = alphas[minindex]
-#     bestfitname = bestfit.name
-
-#     chisqr_formatted = ("{:.1f}".format(chimin))
-#     alpha_formatted = ("{:.1f}".format(alphmin))
-
-#     compspec(specnorm, bestfit, alphmin, redchisqr)                
-#     return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
-#     #ADD PLOTTING OPTION TO CLASSIFY BY STANDARD
-
-#---------------------------------------------------------------------------------------------------------------------
 
 def compspec(spec1, spec2, alpha=1, redchisqr = 1, err=True):
-
-    #This function graphs two different spectra onto the same plot and calculates chi for a spectrum and a standard model
     #spec1 is intended as a source while spec2 is intended for a standard model
 
     # chi_squared = chisquare(spec1, spec2)
@@ -436,7 +346,7 @@ def compspec(spec1, spec2, alpha=1, redchisqr = 1, err=True):
     # chisqr_formatted = ("{:.1f}".format(chisqr))
     #chi = (chi_squared)**(1/2)
     
-     #this simply plots the graphs inputed; as a visual for chi
+    #this simply plots the graphs inputed; as a visual for chi
 
     fig, axs = plt.subplots(2, 1, gridspec_kw={'height_ratios': [5, 1]}, figsize=(9, 5), sharex=True)  # 2, 1 for two rows one column
 
@@ -468,30 +378,30 @@ def compspec(spec1, spec2, alpha=1, redchisqr = 1, err=True):
 
 
 
-def suppress_empty_figures(func, *args, **kwargs):
-    """Runs a function and closes only truly empty figures (0 axes)."""
-    before = set(plt.get_fignums())
-    f = io.StringIO()
-    with contextlib.redirect_stdout(f), contextlib.redirect_stderr(f):
-        result = func(*args, **kwargs)
-    after = set(plt.get_fignums())
-    new_figs = after - before
+# def suppress_empty_figures(func, *args, **kwargs):
+#     """Runs a function and closes only truly empty figures (0 axes)."""
+#     before = set(plt.get_fignums())
+#     f = io.StringIO()
+#     with contextlib.redirect_stdout(f), contextlib.redirect_stderr(f):
+#         result = func(*args, **kwargs)
+#     after = set(plt.get_fignums())
+#     new_figs = after - before
     
-    for fig_num in new_figs:
-        fig = plt.figure(fig_num)
-        if len(fig.axes) == 0:
-            plt.close(fig_num)
-    # If the fig axes is 0, it will not be plotted
-    return result
+#     for fig_num in new_figs:
+#         fig = plt.figure(fig_num)
+#         if len(fig.axes) == 0:
+#             plt.close(fig_num)
+#     # If the fig axes is 0, it will not be plotted
+#     return result
 
-def fit_models_to_sources(source, model_name):
-    model, wave = ucdmcmc.getModelSet(model_name, 'JWST-NIRSPEC-PRISM')
-    sp = spec(source)
-    spsm = ucdmcmc.resample(sp, wave)
+# def fit_models_to_sources(source, model_name):
+#     model, wave = ucdmcmc.getModelSet(model_name, 'JWST-NIRSPEC-PRISM')
+#     sp = spec(source)
+#     spsm = ucdmcmc.resample(sp, wave)
 
-    ipar = suppress_empty_figures(ucdmcmc.fitGrid, spsm, model, file_prefix=sp.name + model_name + "Gridfit", output="allvalues", report = True)
-    par = suppress_empty_figures(ucdmcmc.fitMCMC, spsm, model, p0=ipar, nstep=2500, file_prefix = sp.name + model_name + "_mcmc", output="all", verbose=False, report = True)
+#     ipar = suppress_empty_figures(ucdmcmc.fitGrid, spsm, model, file_prefix=sp.name + model_name + "Gridfit", output="allvalues", report = True)
+#     par = suppress_empty_figures(ucdmcmc.fitMCMC, spsm, model, p0=ipar, nstep=2500, file_prefix = sp.name + model_name + "_mcmc", output="all", verbose=False, report = True)
 
-    plt.show() 
+#     plt.show() 
 
-    return sp.name, model_name
+#     return sp.name, model_name
