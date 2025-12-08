@@ -11,7 +11,7 @@ import astropy.units as u
 from astropy import constants as const
 from astropy.utils.data import download_file
 from scipy.interpolate import griddata
-# import splat
+import splat
 # import ucdmcmc
 
 #code parameters
@@ -20,6 +20,21 @@ MODEL_FOLDER = os.path.join(CODE_PATH,'NIRSpec_PRISM_standards/')
 MODEL_FOLDER_NIR = os.path.join(CODE_PATH,'NIR_standards/')
 
 class spec(splat.Spectrum):
+    """
+    Description:
+        Class for containing spectral data from JWST fits files in 1.0 - 5.0 micron range.
+
+    Parameters:
+        file: file to be read
+        read_file: When True, will read in the file 
+        flxtype: Determines whether the units of flux will be in flam or fnu
+        
+    Example:
+        >>> import TAPS
+        >>> spec1 = spec("borg-0314m6712-v3_prism-clear_1747_676.spec.fits") #read in a file
+        >>> spec1 = spec("borg-0314m6712-v3_prism-clear_1747_676.spec.fits", flxtype = "fnu") #reads in file with fnu
+
+    """
     def __init__(self, file, read_file: bool = True, flxtype = "flam"):
         self.file = file
         self.variance = []
@@ -99,51 +114,29 @@ class spec(splat.Spectrum):
                 pieceundscr = self.file.split('_')
                 self.name = pieceundscr[1]
                 self.name_err = "e_" + pieceundscr[1]
-
-        # elif "txt" in self.file:
-        #     df_read = pd.read_csv(self.file)
-        #     wrong_header = df_read.columns
-        #     header_values = wrong_header.values
-        #     header_split = header_values[0].split("  ")
-        #     header_split[0] = float(header_split[0])
-        #     header_split[1] = float(header_split[1])
-            
-        #     wave_list = []
-        #     flux_list = []
-        #     wave_list.append(header_split[0])
-        #     flux_list.append(header_split[1])
-            
-        #     for i in range(len(df_read)):
-        #         value_split = df_read.iloc[i,0].split("  ")
-        #         value_split[0] = float(value_split[0])
-        #         value_split[1] = float(value_split[1])
-        #         wave_list.append(value_split[0])
-        #         flux_list.append(value_split[1])
-        #     df_dict = {"wave" : wave_list , "flux" : flux_list}
-            
-        #     data = pd.DataFrame(data=df_dict)
-        #     self.wave = data['wave'].values * u.AA
-        #     self.wave = self.wave.to(u.micron)
-        #     self.flux = data['flux'].values * u.microjansky #I DO NOT KNOW THE REAL UNITS OF FLUX FOR THE 4 SOURCES!
-        #     #-----------------------------------------------------------------------------------------------------
-        #     self.noise = data['flux'].values * u.microjansky #err_fnu
-        #     #---------------------------------------------------------------------------
-        #     #BE WARE BE WARE BE WARE BE WARE
-        #     #currently do not have uncertainty for luhman sources! THIS IS JUST SO SOURCES CAN BE READ
-        #     self.variance = self.noise**2
-
-        #     if self.flux_label == r'$f_{\lambda}\$':
-        #         self.flux = ((self.flux * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-        #         self.noise = ((self.noise * const.c)/(self.wave**2)).to((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
-        #         self.variance = self.noise**2
-            
-        #     piecedot = self.file.split('.')
-        #     self.name = piecedot[0]
-
-    
     
     def plot(self):
-    #plots the spectrum in either fnu or flam as specified
+        """
+        Plots the object's spectrum with wavelength in microns.
+    
+        Parameters
+        -----------------------------
+        xlim: a list to specify the range of the x-axis (wavelength)
+        ylim: a list to specify the range of the y-axis (flux)
+
+    
+        Returns
+        -----------------------------
+        figure: the plt.figure of the spectrum
+        
+    
+        Example:
+        -----------------------------
+            >>> import TAPS
+            >>> spec1 = TAPS.spec(borg-0314m6712-v3_prism-clear_1747_676.spec.fits)
+            >>> spec1.plot(xlim = [0.5, 4.5])
+        
+        """
         if self.flux_label == r'$f_{\nu}\$':
             ylabel = r'$f_{\nu}\ [{\mu}Jy]$'
         elif self.flux_label == r'$f_{\lambda}\$':
@@ -174,6 +167,25 @@ for standfile in os.listdir(MODEL_FOLDER_NIR):
     standardset_NIR.append(standard)
 
 def interpolate(spectrum, stan):
+    """
+    returns a new TAPS.spec object interpolated over another TAPS.spec object 
+    
+    Parameters
+    -----------------------------
+    spectrum: a TAPS.spec object intended to be interpolated over
+    stan: a TAPS.spec object needing interpolation (intended for standards in the standardset and standardset_NIR lists)
+
+
+    Returns
+    -----------------------------
+    standard: an interpolated TAPS.spec object 
+
+
+    Notes:
+    -----------------------------
+    TAPS.interpolate will return standard with flux as flam with units of (10^-20)*ergs/cm^2/s/Angstrom
+    TAPS.interpolate is intended for the TAPS.classifystandard and TAPS.classifystandard_NIR 
+    """
     standard = copy.deepcopy(stan)
     stanflxint = griddata(standard.wave, standard.flux, spectrum.wave, method = 'linear', rescale = True)
     standard.flux = np.array(stanflxint) * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1))
@@ -182,6 +194,30 @@ def interpolate(spectrum, stan):
 
 
 def fnutoflam(spectrum):
+    """
+    returns a new TAPS.spec object with flux converted to flux_lam, in units of (10^-20)*ergs/cm^2/s/Angstrom
+    
+    Parameters
+    -----------------------------
+    spectrum: a TAPS.spec object with flux as fnu
+
+
+    Returns
+    -----------------------------
+    newspec: TAPS.spec
+
+
+    Notes:
+    -----------------------------
+    fnutoflam() will not proceed unless the TAPS.spec object is in fnu 
+
+
+    Example:
+    -----------------------------
+        >>> import TAPS
+        >>> spec1 = TAPS.spec(borg-0314m6712-v3_prism-clear_1747_676.spec.fits, flxtype = "fnu")
+        >>> spec1_flam = TAPS.fnutoflam(spec1)
+    """
     newspec = copy.deepcopy(spectrum)
     if newspec.flux_label == r"$f_{\nu}\$":
         if not newspec.flux_unit == u.microjansky:
@@ -198,6 +234,30 @@ def fnutoflam(spectrum):
         print("Something has gone wrong")
 
 def flamtofnu(spectrum):
+    """
+    returns a new TAPS.spec object with flux converted to flux_nu, in units of microjankeys
+    
+    Parameters
+    -----------------------------
+    spectrum: a TAPS.spec object with flux as flam
+
+
+    Returns
+    -----------------------------
+    newspec: TAPS.spec
+
+
+    Notes:
+    -----------------------------
+    flamtofnu() will not proceed unless the TAPS.spec object is in flam 
+
+
+    Example:
+    -----------------------------
+        >>> import TAPS
+        >>> spec1 = TAPS.spec(borg-0314m6712-v3_prism-clear_1747_676.spec.fits)
+        >>> spec1_fnu = TAPS.flamtofnu(spec1)
+    """
     newspec = copy.deepcopy(spectrum)
     if newspec.flux_label == r'$f_{\lambda}\$':
         if not newspec.flux_unit == (10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1):
@@ -213,6 +273,25 @@ def flamtofnu(spectrum):
         print("Something has gone wrong")
 
 def normalizespec(spectrum):
+    """
+    returns a new TAPS.spec object with flux normalized to 1
+    
+    Parameters
+    -----------------------------
+    spectrum: a TAPS.spec object
+
+
+    Returns
+    -----------------------------
+    newspec: normalized TAPS.spec object
+
+
+    Example:
+    -----------------------------
+        >>> import TAPS
+        >>> spec1 = TAPS.spec(borg-0314m6712-v3_prism-clear_1747_676.spec.fits)
+        >>> spec1_norm = TAPS.normalizespec(spec1)
+    """
     if type(spectrum) == spec or type(spectrum) == TAPS.spec:
         output = copy.deepcopy(spectrum)
         output.noise = spectrum.noise / np.nanmax(spectrum.flux)
@@ -224,6 +303,25 @@ def normalizespec(spectrum):
 
 
 def alpha(spec1, spec2):
+    """
+    returns the value of alpha that will minimize the statistical chi-squared between two spectra
+    
+    Parameters
+    -----------------------------
+    spec1: a TAPS.spec object 
+    spec2: a TAPS.spec object 
+
+
+    Returns
+    -----------------------------
+    alpha: a scaler
+           meant to minimize the chi-squared between two spectra
+
+
+    Notes:
+    -----------------------------
+    TAPS.alpha is intended for use in TAPS.chisquare() 
+    """
     alphanum = 0 
     alphadenom = 0
     for i in range(len(spec1.flux)):
@@ -237,7 +335,24 @@ def alpha(spec1, spec2):
 
 
 def chisquare(spec1, spec2):
-   
+    """
+    returns the chi-squared value between two spectra, a numerical value to determine how similar two spectra are
+    
+    Parameters
+    -----------------------------
+    spec1: a TAPS.spec object 
+    spec2: a TAPS.spec object 
+
+
+    Returns
+    -----------------------------
+    chi_squared: a scaler quantity,
+           as chi_squared appoaches zero the more similar the two spectra are
+
+    Notes:
+    -----------------------------
+    To call chi_squared(), need alpha()
+    """
     chi_squared = 0
     alph = alpha(spec1, spec2)
     
@@ -248,11 +363,47 @@ def chisquare(spec1, spec2):
     return float(chi_squared)
 
 def reducedchisquare(spec1, chisquare):
+    """
+    returns the reduced chi-squared value between two spectra; calculates chi-squared then divides by the degrees of freedom.
+    
+    Parameters
+    -----------------------------
+    spec1: a TAPS.spec object 
+    chisquare: a scaler,
+            the spectrum's chisquare
+
+
+    Returns
+    -----------------------------
+    redchisqr: a scaler quantity, 
+    """
     dof = len(spec1.wave) - 1
     redchisqr = chisquare/dof
     return redchisqr
 
 def trim(spectrum, rng):
+    """
+    returns a new TAPS.spec object with a trimmed wavelength range
+    
+    Parameters
+    -----------------------------
+    spectrum: a TAPS.spec object 
+    rng: a list,
+        with the wavelength range you wish to keep
+
+
+    Returns
+    -----------------------------
+    spec: a TAPS.spec object,
+            with the limited wavelength range of rng
+
+
+    Example:
+    -----------------------------
+        >>> import TAPS
+        >>> spec1 = TAPS.spec("borg-0314m6712-v3_prism-clear_1747_676.spec.fits")
+        >>> spec1_trimmed = TAPS.trim(spec1, [1, 4.5])
+    """
     spec = copy.deepcopy(spectrum)
     mask = np.zeros(len(spec.wave))
     mask[np.where(np.logical_and(spec.wave.value > rng[0],spec.wave.value < rng[1]))] = 1
@@ -263,6 +414,25 @@ def trim(spectrum, rng):
     return spec
 
 def classifystandard(spectrum):
+    """
+    returns the best fit standard with an overplot of both spectra, the reduced chi-squared, and alpha  
+    
+    Parameters
+    -----------------------------
+    spectrum: a TAPS.spec object 
+
+
+    Returns
+    -----------------------------
+    a tuple with the name of the (name of best fit standard, the calculated reduced chi-squared, the alpha)
+
+
+    Example:
+    -----------------------------
+        >>> import TAPS
+        >>> spec1 = TAPS.spec("borg-0314m6712-v3_prism-clear_1747_676.spec.fits")
+        >>> classifystandard(spec1)
+    """
     specnorm = normalizespec(spectrum)  
     standnormlist = []
     chisquares = []
@@ -293,9 +463,26 @@ def classifystandard(spectrum):
 
 
 def classifystandard_NIR(spectrum): 
-    #This iteration trims the inputted spectrum according to the standard compared
-    #Trimming allows for a more accurate reduced chi squared 
-    #This iteration plots the wave range 0.5-2.5 microns
+    """
+    returns the best fit standard with an overplot of both spectra, the reduced chi-squared, and alpha with NIR standards (wavelength range 0.5-2.5)
+    These NIR standards have additional dwarf, mild subdwarf (dsd), subdwarf (sd), and extreme subdwarf (esd) standards
+    
+    Parameters
+    -----------------------------
+    spectrum: a TAPS.spec object 
+
+
+    Returns
+    -----------------------------
+    an overplot
+
+
+    Example:
+    -----------------------------
+        >>> import TAPS
+        >>> spec1 = TAPS.spec("borg-0314m6712-v3_prism-clear_1747_676.spec.fits")
+        >>> classifystandard_NIR(spec1)
+    """
     specnorm = normalizespec(spectrum)  
     standnormlist = []
     chisquares = []
@@ -339,14 +526,29 @@ def classifystandard_NIR(spectrum):
 
 
 def compspec(spec1, spec2, alpha=1, redchisqr = 1, err=True):
-    #spec1 is intended as a source while spec2 is intended for a standard model
-
-    # chi_squared = chisquare(spec1, spec2)
-    # alpha_formatted = ("{:.1f}".format(alpha))
-    # chisqr_formatted = ("{:.1f}".format(chisqr))
-    #chi = (chi_squared)**(1/2)
+    """
+    overplots two spectra 
     
-    #this simply plots the graphs inputed; as a visual for chi
+    Parameters
+    -----------------------------
+    spec1: a TAPS.spec object
+    spec2: a TAPS.spec object
+    alpha: a scaler
+    redchisqr: a scaler
+    err: a boolean
+
+
+    Returns
+    -----------------------------
+    an overplot of the two spectra
+
+
+    Example:
+    -----------------------------
+        >>> import TAPS
+        >>> spec1 = TAPS.spec("borg-0314m6712-v3_prism-clear_1747_676.spec.fits")
+        >>> classifystandard_NIR(spec1)
+    """
 
     fig, axs = plt.subplots(2, 1, gridspec_kw={'height_ratios': [5, 1]}, figsize=(9, 5), sharex=True)  # 2, 1 for two rows one column
 
