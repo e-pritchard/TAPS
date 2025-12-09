@@ -495,6 +495,23 @@ def classifystandard_NIR(spectrum):
     for standard in standardset_NIR:
         #print(f"Standard's wave range before interpolation {standard.wave}")
         #print(f"Spectrum's wave range before trimming {len(specnorm.wave)}")
+        if std_class == "esd":
+            if not "esd" in standard.name:
+                continue
+        elif std_class == "dsd":
+            if not "dsd" in standard.name:
+                continue
+        elif std_class == "sd":
+            if "dsd" in standard.name or "esd" in standard.name or not "sd" in standard.name:
+                continue
+        elif std_class == "d":
+            if "dsd" in standard.name or "esd" in standard.name or "sd" in standard.name:
+                continue
+        elif std_class == "all":
+            pass
+        else:
+            raise TypeError("Not known standard type") 
+            
         stan_rng = [np.nanmin(standard.wave.value) - 0.01, np.nanmax(standard.wave.value) + 0.01]
         specnorm_trimmed = trim(specnorm, stan_rng)
         #print(f"Spectrum's wave range after trimming {len(specnorm_trimmed.wave)}")
