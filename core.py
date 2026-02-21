@@ -18,6 +18,7 @@ import splat
 CODE_PATH = os.path.dirname(os.path.abspath(__file__))+'/../'
 MODEL_FOLDER = os.path.join(CODE_PATH,'NIRSpec_PRISM_standards/')
 MODEL_FOLDER_NIR = os.path.join(CODE_PATH,'NIR_standards/')
+MODEL_FOLDER_TAPS = os.path.join(CODE_PATH,'TAPS_standards/')
 
 class spec(splat.Spectrum):
     """
@@ -65,10 +66,16 @@ class spec(splat.Spectrum):
             
             if "/" in self.file:
                 piecedir = self.file.split('/')
-                pieceper = piecedir[-1].split('.')
-                pieceundscr = pieceper[0].split('_')
-                self.name = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
-                self.name_err = "e_" + pieceundscr[3]
+                if len(piecedir[-1]) < 10:
+                    pieceper = piecedir[-1].split(".")
+                    self.name = pieceper[0]
+                    self.name_err = "e_" + self.name
+                else:
+                    pieceper = piecedir[-1].split('.')
+                    pieceundscr = pieceper[0].split('_')
+                    self.name = pieceundscr[0] + "_" + pieceundscr[2] + "_" + pieceundscr[3]
+                    self.name_err = "e_" + pieceundscr[3]
+
             else:
                 pieceper = self.file.split('.')
                 pieceundscr = pieceper[0].split('_')
@@ -165,6 +172,11 @@ standardset_NIR = []
 for standfile in os.listdir(MODEL_FOLDER_NIR):
     standard = spec(MODEL_FOLDER_NIR + standfile)
     standardset_NIR.append(standard)
+
+standardset_TAPS = []
+for standfile in os.listdir(MODEL_FOLDER_TAPS):
+    standard = spec(MODEL_FOLDER_TAPS + standfile)
+    standardset_TAPS.append(standard)
 
 def interpolate(spectrum, stan):
     """
@@ -540,6 +552,61 @@ def classifystandard_NIR(spectrum):
     compspec(bestfit_spec, bestfit, alphmin, redchisqr)                
     return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
     #ADD PLOTTING OPTION TO CLASSIFY BY STANDARD
+
+def classifystandard_TAPS(spectrum, std_class="all"): 
+    #This iteration trims the inputted spectrum according to the standard compared
+    #Trimming allows for a more accurate reduced chi squared 
+    #This iteration plots the wave range 0.5-2.5 microns
+    specnorm = normalizespec(spectrum)  
+    standnormlist = []
+    chisquares = []
+    alphas = []
+    standardsetint = []
+    specset_trimmed = []
+    #standnames = []
+    #stanflxint = [] #list to hold interpolated standard flux
+    
+    for standard in standardset_TAPS:
+        if std_class == "sd":
+            if not "sd" in standard.name:
+                continue
+        elif std_class == "d":
+            if "sd" in standard.name:
+                continue
+        elif std_class == "all":
+            pass
+        else:
+            raise TypeError("Not known standard type") 
+        #print(f"Standard's wave range before interpolation {standard.wave}")
+        #print(f"Spectrum's wave range before trimming {len(specnorm.wave)}")
+        stan_rng = [np.nanmin(standard.wave.value) - 0.01, np.nanmax(standard.wave.value) + 0.01]
+        specnorm_trimmed = trim(specnorm, stan_rng)
+        #print(f"Spectrum's wave range after trimming {len(specnorm_trimmed.wave)}")
+        stanint = interpolate(specnorm_trimmed, standard)
+        #print(f"Standard's wave range after interpolation {stanint.wave}")
+        standnorm = normalizespec(stanint)
+        alph = alpha(specnorm_trimmed, standnorm)
+        chisqur = chisquare(specnorm_trimmed, standnorm)
+        standnormlist.append(standnorm)
+        specset_trimmed.append(specnorm_trimmed)
+        chisquares.append(chisqur)
+        alphas.append(alph)
+   
+        
+    chimin = np.min(chisquares)
+    minindex = np.argmin(chisquares)
+    bestfit = standnormlist[minindex]
+    bestfit_spec = specset_trimmed[minindex]
+    redchisqr = reducedchisquare(bestfit_spec, chimin)
+    alphmin = alphas[minindex]
+    bestfitname = bestfit.name
+
+    chisqr_formatted = ("{:.1f}".format(chimin))
+    alpha_formatted = ("{:.1f}".format(alphmin))
+
+    compspec(bestfit_spec, bestfit, alphmin, redchisqr)               
+    # f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
+    return (bestfitname, chisqr_formatted, alpha_formatted)
 
 
 def compspec(spec1, spec2, alpha=1, redchisqr = 1, err=True):
