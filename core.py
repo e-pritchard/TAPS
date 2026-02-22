@@ -474,7 +474,7 @@ def classifystandard(spectrum):
     return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
 
 
-def classifystandard_NIR(spectrum): 
+def classifystandard_NIR(spectrum, std_class="all"): 
     """
     returns the best fit standard with an overplot of both spectra, the reduced chi-squared, and alpha with NIR standards (wavelength range 0.5-2.5)
     These NIR standards have additional dwarf, mild subdwarf (dsd), subdwarf (sd), and extreme subdwarf (esd) standards
