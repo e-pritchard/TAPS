@@ -554,9 +554,9 @@ def classifystandard_NIR(spectrum, std_class="all"):
     #ADD PLOTTING OPTION TO CLASSIFY BY STANDARD
 
 def classifystandard_TAPS(spectrum, std_class="all"): 
-    #This iteration trims the inputted spectrum according to the standard compared
+    #This iteration trims the inputted spectrum according to the TAPS standardset
     #Trimming allows for a more accurate reduced chi squared 
-    #This iteration plots the wave range 0.5-2.5 microns
+    #This iteration plots the wave range 0.76-5.0 microns
     specnorm = normalizespec(spectrum)  
     standnormlist = []
     chisquares = []
@@ -579,7 +579,7 @@ def classifystandard_TAPS(spectrum, std_class="all"):
             raise TypeError("Not known standard type") 
         #print(f"Standard's wave range before interpolation {standard.wave}")
         #print(f"Spectrum's wave range before trimming {len(specnorm.wave)}")
-        stan_rng = [np.nanmin(standard.wave.value) - 0.01, np.nanmax(standard.wave.value) + 0.01]
+        stan_rng = [0.76, 5.0]
         specnorm_trimmed = trim(specnorm, stan_rng)
         #print(f"Spectrum's wave range after trimming {len(specnorm_trimmed.wave)}")
         stanint = interpolate(specnorm_trimmed, standard)
