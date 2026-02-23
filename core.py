@@ -862,7 +862,7 @@ def compspec(spec1, spec2, alpha=1, redchisqr = 1, err=True):
                     color='k', alpha=0.3) 
         
     #axs[0].plot([], [], ' ', label=r"$\alpha = %.1f, \ \chi_{r}^2 = %.1f$" % (alpha, redchisqr))
-    axs[0].plot([], [], ' ', label=r"chi_{r}^2 = %.1f$" % (redchisqr))
+    axs[0].plot([], [], ' ', label=fr"$\chi_r^2 = {redchisqr:.1f}$")
     # axs[0].plot([], [], ' ', label=fr"$\alpha$ = {alpha_formatted}")
     # axs[0].plot([], [], ' ', label=fr"$\chi^2$ = {chisqr_formatted}")
     axs[0].legend(fontsize = 13)
