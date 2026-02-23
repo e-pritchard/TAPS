@@ -587,7 +587,7 @@ def classifystandard_TAPS(spectrum, std_class="all",plot_normalized=True):
         #print(f"Standard's wave range after interpolation {stanint.wave}")
         alph = alpha(spec_trimmed, stanint)
         chisqur = chisquare(spec_trimmed, stanint)
-        standlist.append(standint)
+        standlist.append(stanint)
         #specset_trimmed.append(spec_trimmed)
         chisquares.append(chisqur)
         alphas.append(alph)
