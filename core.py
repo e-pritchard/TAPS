@@ -553,22 +553,24 @@ def classifystandard_NIR(spectrum, std_class="all"):
     return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
     #ADD PLOTTING OPTION TO CLASSIFY BY STANDARD
 
-def classifystandard_TAPS(spectrum, std_class="all"): 
+
+def classifystandard_TAPS(spectrum, std_class="all",plot_normalized=True): 
     #This iteration trims the inputted spectrum according to the TAPS standardset
     #Trimming allows for a more accurate reduced chi squared 
-    #This iteration plots the wave range 0.76-5.0 microns
-    specnorm = normalizespec(spectrum)  
-    standnormlist = []
+
+    stan_rng = [0.76, 5.0]
+    spec_trimmed = trim(spectrum, stan_rng)
+
     chisquares = []
     alphas = []
-    standardsetint = []
+    standlist = []
     specset_trimmed = []
     #standnames = []
     #stanflxint = [] #list to hold interpolated standard flux
     
     for standard in standardset_TAPS:
         if std_class == "sd":
-            if not "sd" in standard.name:
+            if "sd" not in standard.name:
                 continue
         elif std_class == "d":
             if "sd" in standard.name:
@@ -579,24 +581,23 @@ def classifystandard_TAPS(spectrum, std_class="all"):
             raise TypeError("Not known standard type") 
         #print(f"Standard's wave range before interpolation {standard.wave}")
         #print(f"Spectrum's wave range before trimming {len(specnorm.wave)}")
-        stan_rng = [0.76, 5.0]
-        specnorm_trimmed = trim(specnorm, stan_rng)
         #print(f"Spectrum's wave range after trimming {len(specnorm_trimmed.wave)}")
-        stanint = interpolate(specnorm_trimmed, standard)
+       
+        stanint = interpolate(spec_trimmed, standard)
         #print(f"Standard's wave range after interpolation {stanint.wave}")
-        standnorm = normalizespec(stanint)
-        alph = alpha(specnorm_trimmed, standnorm)
-        chisqur = chisquare(specnorm_trimmed, standnorm)
-        standnormlist.append(standnorm)
-        specset_trimmed.append(specnorm_trimmed)
+        alph = alpha(spec_trimmed, stanint)
+        chisqur = chisquare(spec_trimmed, stanint)
+        standlist.append(standint)
+        #specset_trimmed.append(spec_trimmed)
         chisquares.append(chisqur)
         alphas.append(alph)
    
         
     chimin = np.min(chisquares)
     minindex = np.argmin(chisquares)
-    bestfit = standnormlist[minindex]
-    bestfit_spec = specset_trimmed[minindex]
+    bestfit = standlist[minindex]
+    #bestfit_spec = specset_trimmed[minindex]
+    bestfit_spec = spec_trimmed
     redchisqr = reducedchisquare(bestfit_spec, chimin)
     alphmin = alphas[minindex]
     bestfitname = bestfit.name
@@ -604,9 +605,76 @@ def classifystandard_TAPS(spectrum, std_class="all"):
     chisqr_formatted = ("{:.1f}".format(chimin))
     alpha_formatted = ("{:.1f}".format(alphmin))
 
-    compspec(bestfit_spec, bestfit, alphmin, redchisqr)               
+    if plot_normalized:
+        bestfit_scaled = copy.deepcopy(bestfit)
+        bestfit_scaled.flux = alphmin * bestfit_scaled.flux
+
+        bestfit_spec_norm = normalizespec(bestfit_spec)
+        bestfit_std_norm = normalizespec(bestfit_scaled)
+
+        compspec(bestfit_spec_norm, bestfit_std_norm, alpha = 1, redchisqr=redchisqr)
+
+
+    #compspec(bestfit_spec, bestfit, alphmin, redchisqr)               
     # f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
     return (bestfitname, chisqr_formatted, alpha_formatted)
+
+
+#OLD CLASSIFYSTANDARD_TAPS
+# def classifystandard_TAPS(spectrum, std_class="all"): 
+#     #This iteration trims the inputted spectrum according to the TAPS standardset
+#     #Trimming allows for a more accurate reduced chi squared 
+#     #This iteration plots the wave range 0.76-5.0 microns
+#     specnorm = normalizespec(spectrum)  
+#     standnormlist = []
+#     chisquares = []
+#     alphas = []
+#     standardsetint = []
+#     specset_trimmed = []
+#     #standnames = []
+#     #stanflxint = [] #list to hold interpolated standard flux
+    
+#     for standard in standardset_TAPS:
+#         if std_class == "sd":
+#             if not "sd" in standard.name:
+#                 continue
+#         elif std_class == "d":
+#             if "sd" in standard.name:
+#                 continue
+#         elif std_class == "all":
+#             pass
+#         else:
+#             raise TypeError("Not known standard type") 
+#         #print(f"Standard's wave range before interpolation {standard.wave}")
+#         #print(f"Spectrum's wave range before trimming {len(specnorm.wave)}")
+#         stan_rng = [0.76, 5.0]
+#         specnorm_trimmed = trim(specnorm, stan_rng)
+#         #print(f"Spectrum's wave range after trimming {len(specnorm_trimmed.wave)}")
+#         stanint = interpolate(specnorm_trimmed, standard)
+#         #print(f"Standard's wave range after interpolation {stanint.wave}")
+#         standnorm = normalizespec(stanint)
+#         alph = alpha(specnorm_trimmed, standnorm)
+#         chisqur = chisquare(specnorm_trimmed, standnorm)
+#         standnormlist.append(standnorm)
+#         specset_trimmed.append(specnorm_trimmed)
+#         chisquares.append(chisqur)
+#         alphas.append(alph)
+   
+        
+#     chimin = np.min(chisquares)
+#     minindex = np.argmin(chisquares)
+#     bestfit = standnormlist[minindex]
+#     bestfit_spec = specset_trimmed[minindex]
+#     redchisqr = reducedchisquare(bestfit_spec, chimin)
+#     alphmin = alphas[minindex]
+#     bestfitname = bestfit.name
+
+#     chisqr_formatted = ("{:.1f}".format(chimin))
+#     alpha_formatted = ("{:.1f}".format(alphmin))
+
+#     compspec(bestfit_spec, bestfit, alphmin, redchisqr)               
+#     # f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
+#     return (bestfitname, chisqr_formatted, alpha_formatted)
 
 
 def compspec(spec1, spec2, alpha=1, redchisqr = 1, err=True):
