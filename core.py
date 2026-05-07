@@ -336,6 +336,7 @@ def alpha(spec1, spec2):
     """
     alphanum = 0 
     alphadenom = 0
+    
     for i in range(len(spec1.flux)):
         if np.isfinite(spec1.flux[i].value) and np.isfinite(spec2.flux[i].value):
             alphanum += ((spec1.flux[i])*(spec2.flux[i])) / (spec1.noise[i]**2)
