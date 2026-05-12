@@ -15,7 +15,7 @@ import splat
 # import ucdmcmc
 
 #code parameters
-CODE_PATH = os.path.dirname(os.path.abspath(__file__))+'/../'
+CODE_PATH = os.path.dirname(os.path.abspath(__file__))#+'/../'
 MODEL_FOLDER = os.path.join(CODE_PATH,'NIRSpec_PRISM_standards/')
 MODEL_FOLDER_NIR = os.path.join(CODE_PATH,'NIR_standards/')
 MODEL_FOLDER_TAPS = os.path.join(CODE_PATH,'TAPS_standards/')
@@ -304,17 +304,24 @@ def normalizespec(spectrum):
         >>> spec1 = TAPS.spec(borg-0314m6712-v3_prism-clear_1747_676.spec.fits)
         >>> spec1_norm = TAPS.normalizespec(spec1)
     """
-    if type(spectrum) == spec or type(spectrum) == TAPS.spec:
-        output = copy.deepcopy(spectrum)
-        output.noise = spectrum.noise / np.nanmax(spectrum.flux)
-        output.flux = spectrum.flux / np.nanmax(spectrum.flux)
+    if type(spectrum) == spec:
+        if rng == False:
+            output = copy.deepcopy(spectrum)
+            output.noise = spectrum.noise / np.nanmax(spectrum.flux)
+            output.flux = spectrum.flux / np.nanmax(spectrum.flux)
+        if rng:
+            spec_trimmed = trim(spectrum, (rng[0], rng[1]))
+            output = copy.deepcopy(spectrum)
+            output.noise = spectrum.noise / np.nanmax(spec_trimmed.flux)
+            output.flux = spectrum.flux / np.nanmax(spec_trimmed.flux)
     else: 
         print("Need a TAPS.spec object!")
+        
 
-    return output   
+    return output
 
 
-def alpha(spec1, spec2):
+def alpha(spectrum, standard):
     """
     returns the value of alpha that will minimize the statistical chi-squared between two spectra
     
@@ -334,20 +341,21 @@ def alpha(spec1, spec2):
     -----------------------------
     TAPS.alpha is intended for use in TAPS.chisquare() 
     """
-    alphanum = 0 
-    alphadenom = 0
-    
-    for i in range(len(spec1.flux)):
-        if np.isfinite(spec1.flux[i].value) and np.isfinite(spec2.flux[i].value):
-            alphanum += ((spec1.flux[i])*(spec2.flux[i])) / (spec1.noise[i]**2)
-            alphadenom += (spec2.flux[i]**2) / (spec1.noise[i]**2)
-            
+    obs_flux = spectrum.flux
+    stan_flux = standard.flux
+    obs_noise = spectrum.noise
+
+    master_mask = np.isfinite(obs_flux) & np.isfinite(stan_flux) & np.isfinite(obs_noise)
+
+    alphanum = np.sum(((obs_flux[master_mask]) * (stan_flux[master_mask])) / (obs_noise[master_mask]**2))
+    alphadenom = np.sum((stan_flux[master_mask]**2) / (obs_noise[master_mask]**2))
+        
     alpha = alphanum / alphadenom
-    return alpha
+    return float(alpha)
             
 
 
-def chisquare(spec1, spec2):
+def chisquare(spectrum, standard):
     """
     returns the chi-squared value between two spectra, a numerical value to determine how similar two spectra are
     
@@ -366,16 +374,20 @@ def chisquare(spec1, spec2):
     -----------------------------
     To call chi_squared(), need alpha()
     """
-    chi_squared = 0
-    alph = alpha(spec1, spec2)
+    alph = alpha(spectrum, standard)
+
+    obs_flux = spectrum.flux
+    stan_flux = standard.flux
+    obs_noise = spectrum.noise
     
-    for i in range(len(spec1.flux)):
-        if np.isfinite(spec1.flux[i].value) and np.isfinite(spec2.flux[i].value):
-            chi_squared += ((spec1.flux[i] - (alph * spec2.flux[i])) / (spec1.noise[i]))**2     
+    master_mask = np.isfinite(obs_flux) & np.isfinite(stan_flux) & np.isfinite(obs_noise)
+
+
+    chi_squared = np.sum( ((obs_flux[master_mask] - (alph * stan_flux[master_mask])) / obs_noise[master_mask] )**2 )
             
     return float(chi_squared)
 
-def reducedchisquare(spec1, chisquare):
+def reducedchisquare(spectrum, chimin):
     """
     returns the reduced chi-squared value between two spectra; calculates chi-squared then divides by the degrees of freedom.
     
@@ -390,9 +402,8 @@ def reducedchisquare(spec1, chisquare):
     -----------------------------
     redchisqr: a scaler quantity, 
     """
-    dof = len(spec1.wave) - 1
-    redchisqr = chisquare/dof
-    return redchisqr
+    dof = np.count_nonzero(spectrum.wave.value)
+    return chimin / (dof - 1)
 
 def trim(spectrum, rng):
     """
@@ -556,16 +567,12 @@ def classifystandard_NIR(spectrum, std_class="all", plot_normalized=True):
         >>> classifystandard_NIR(spec1)
     """
 
-    chisquares = []
-    alphas = []
-    standlist = []
-    specset_trimmed = []
-    #standnames = []
-    #stanflxint = [] #list to hold interpolated standard flux
+    chi_min = np.inf
+    alph_min = 0
+    bestfit_stan = None
+    bestfit_spec = None
     
     for standard in standardset_NIR:
-        #print(f"Standard's wave range before interpolation {standard.wave}")
-        #print(f"Spectrum's wave range before trimming {len(specnorm.wave)}")
         if std_class == "esd":
             if "esd" not in standard.name:
                 continue
@@ -588,37 +595,34 @@ def classifystandard_NIR(spectrum, std_class="all", plot_normalized=True):
         #print(f"Spectrum's wave range after trimming {len(specnorm_trimmed.wave)}")
         stanint = interpolate(spec_trimmed, standard)
         #print(f"Standard's wave range after interpolation {stanint.wave}")
+        # spec_trimmed =  TAPS.normalizespec(spec_trimmed)
+        # stanint = TAPS.normalizespec(stanint)
+        
         alph = alpha(spec_trimmed, stanint)
         chisqur = chisquare(spec_trimmed, stanint)
-        standlist.append(stanint)
-        specset_trimmed.append(spec_trimmed)
-        chisquares.append(chisqur)
-        alphas.append(alph)
-   
-        
-    chimin = np.min(chisquares)
-    minindex = np.argmin(chisquares)
-    bestfit = standlist[minindex]
-    bestfit_spec = specset_trimmed[minindex]
-    redchisqr = reducedchisquare(bestfit_spec, chimin)
-    alphmin = alphas[minindex]
-    bestfitname = bestfit.name
 
-    chisqr_formatted = ("{:.1f}".format(chimin))
-    alpha_formatted = ("{:.1f}".format(alphmin))
+        if chisqur < chi_min:
+            chi_min = chisqur
+            alph_min = alph
+            bestfit_stan = stanint
+            bestfit_spec = spec_trimmed
+   
+    redchisqr = reducedchisquare(bestfit_spec, chi_min)
+
+    chisqr_formatted = ("{:.1f}".format(chi_min))
+    print(type(alph_min))
+    alpha_formatted = ("{:.1f}".format(alph_min))
 
     if plot_normalized:
-        bestfit_scaled = copy.deepcopy(bestfit)
-        bestfit_scaled.flux = alphmin * bestfit_scaled.flux
+        bestfit_scaled = copy.deepcopy(bestfit_stan)
+        bestfit_scaled.flux = alph_min * bestfit_scaled.flux
 
         spec_plot = normalizespec(bestfit_spec)
         std_plot = normalizespec(bestfit_scaled)
 
         compspec(spec_plot, std_plot, alpha=1, redchisqr=redchisqr)
-
-    #compspec(bestfit_spec, bestfit, alphmin, redchisqr)                
-    return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfitname
-    #ADD PLOTTING OPTION TO CLASSIFY BY STANDARD
+           
+    return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfit_stan.name
 
 #OLD CLASSIFYSTANDARD_NIR
 # def classifystandard_NIR(spectrum, std_class="all"): 
