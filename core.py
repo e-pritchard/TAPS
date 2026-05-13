@@ -6,6 +6,7 @@ import copy
 import os
 import sys
 import contextlib
+import fnmatch
 from astropy.io import fits
 import astropy.units as u
 from astropy import constants as const
@@ -121,6 +122,24 @@ class spec(splat.Spectrum):
                 pieceundscr = self.file.split('_')
                 self.name = pieceundscr[1]
                 self.name_err = "e_" + pieceundscr[1]
+
+
+        elif fnmatch.fnmatch(self.file, "*M?.csv") or fnmatch.fnmatch(self.file, "*L?.csv") or fnmatch.fnmatch(self.file, "*T?.csv"):
+            data = pd.read_csv(self.file)
+            self.wave = data['Wavelength (micron)'].values * u.micron
+            self.flux = data['Flam (1e-20 erg / (Angstrom s cm2))'].values * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)) #flam NORMALIZE BY DIVIDING BY MAX VALUE
+            self.noise = data['Noise'].values * ((10**-20)*u.erg*(u.cm**-2)*(u.s**-1)*(u.angstrom**-1)) #err_flam   
+            self.variance = self.noise**2
+
+            if "/" in self.file:
+                piecedir = self.file.split('/')
+                pieceundscr = piecedir[-1].split('.csv')
+                self.name = pieceundscr[0]
+                self.name_err = "e_" + pieceundscr[0]
+            else:
+                pieceundscr = self.file.split('.csv')
+                self.name = pieceundscr[0]
+                self.name_err = "e_" + pieceundscr[0]
     
     def plot(self):
         """
@@ -284,13 +303,14 @@ def flamtofnu(spectrum):
     else:
         print("Something has gone wrong")
 
-def normalizespec(spectrum):
+def normalizespec(spectrum, rng = False):
     """
     returns a new TAPS.spec object with flux normalized to 1
     
     Parameters
     -----------------------------
     spectrum: a TAPS.spec object
+    rng: a list with the wavelength range to be normalized to
 
 
     Returns
