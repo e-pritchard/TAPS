@@ -635,12 +635,12 @@ def classifystandard_NIR(spectrum, std_class="all", plot_normalized=True):
 
     if plot_normalized:
         bestfit_scaled = copy.deepcopy(bestfit_stan)
-        bestfit_scaled.flux = alph_min * bestfit_scaled.flux
 
         spec_plot = normalizespec(bestfit_spec)
         std_plot = normalizespec(bestfit_scaled)
+        alpha_plot = alpha(spec_plot, std_plot)
 
-        compspec(spec_plot, std_plot, alpha=1, redchisqr=redchisqr)
+        compspec(spec_plot, std_plot, alpha=alpha_plot, redchisqr=redchisqr)
            
     return f"$\chi^{2}$ = {chisqr_formatted}" , f"$\alpha$ = {alpha_formatted}" , "Best fit is " + bestfit_stan.name
 
@@ -782,8 +782,9 @@ def classifystandard_TAPS(spectrum, std_class="all",plot_normalized=True):
 
         bestfit_spec_norm = normalizespec(bestfit_spec)
         bestfit_std_norm = normalizespec(bestfit_scaled)
+        alpha_plot = alpha(bestfit_spec_norm, bestfit_std_norm)
 
-        compspec(bestfit_spec_norm, bestfit_std_norm, alpha = 1, redchisqr=redchisqr)
+        compspec(bestfit_spec_norm, bestfit_std_norm, alpha = alpha_plot, redchisqr=redchisqr)
 
 
     #compspec(bestfit_spec, bestfit, alphmin, redchisqr)               
